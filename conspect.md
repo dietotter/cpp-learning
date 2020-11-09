@@ -223,7 +223,72 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 - You can have namespace aliases: `namespace boo = foo:goo;`. Now we can `std::cout << boo::add(1, 2);`
 - Namespaces should be used to separate application-specific code from reusable code (e.g. math and physics functions could go into separate namespace `math::`). Also, if a library or code will be distributed to others, its better to write it in own namespace
 
-## Local variables
+## Storage duration
 - **Storage duration** determines what rules govern how and when a variable is created and destroyed. In most cases, variable's duration directly determines its lifetime.
-- Local variables have automatic storage duration, which means they are created at the point of definition and are destroyed when the block ends. That's why they're sometimes called automatic variables.
+- Variables with **dynamic duration** are created and destroyed by programmer request (dynamically allocated variables)
+
+## Local variables
+- Local variables have **automatic storage duration**, which means they are created at the point of definition and are destroyed when the block ends. That's why they're sometimes called automatic variables.
 - Identifiers **linkage** determines whether other declarations of that name refer to the same object or nor. Local variables have no linkage, which means that each declaration refers to a unique object. E.g.: `conspect/local-variables.cpp`
+- Uninitialized by default (`int x;` - uninitialized; `int x{};` - zero-initialized; `int x{1};` - initialized with value)
+
+## Global variables
+- Global variables are variables declared outside of a function
+- They have file scope (also informally - global namespace scope)
+- Because defined outside of a function, they are considered to be part of the global namespace
+- They are created when the program starts, and are destroyed when it ends. This is called **static duration**. Variables with *static duration* are sometimes called **static variables**
+- Zero-initialized by default (`int gX;` - zero-initialized). If constant - must be initialized
+- Local variables can shadow the global variables (if local variable x is created with the same name as global, when you try to access using their identifier `x`, local variable is accessed). However, unlike local variables shadowing in inner blocks, you can still access global variable by using `::x`. Still, variable **shadowing** should be avoided
+- Global variables are initialized as a part of program startup, before the main function. This happens in two phases:
+    1. In **static initialization** phase, global variables with constexpr initializers (including literals) are initialized to those values, and global vars without initializers are zero-initialized.
+    2. In **dynamic initialization**, global variables with non-constexpr initializers are initialized (though the phase is more complex and nuanced)
+- Within a single file, global variables are mostly initialized in order of definition. The order of initialization across different files is not defined
+- Dynamic initialization of global variables should be avoided whenever possible
+- Non-contant global variables should be avoided almost always
+- Advices for all global variables:
+    1. Put them into namespaces
+    2. Encapsulate the variable: make its linkage internal (if its not already), then provide external global access function - these functions can ensure proper usage (e.g. do input validation etc). `double getGravity() { ...; return constants::gravity; }`
+    3. When writing otherwise standalone function, that uses global var, don't use the var directly in function body, rather pass it as an argument. This way if we need to use another value, we can just change the argument.
+    
+    ` double instantVelocity(int time, double gravity) { return gravity * time } `
+
+    ` int main() { std::cout << instantVelocity(5, constants::gravity);} `
+
+## Linkage
+- Identifier with **internal linkage** is not accessible from other files (not exposed too the linker). This means that if two files have identically named identifiers with internal linkage, those identifiers will be treated as independent
+- Const and constexpr global variables have internal linkage by default
+- Use `static` to make a non-constant global variable internal (`static int gX;`)
+
+    ### Storage class specifier
+    - **Storage class specifier** sets both the identifier's linkage and its storage duration (but not its scope). The most commonly used keywords are `static`, `extern` and `mutable`.
+
+- Internal objects and functions don't violate the one-definition rule.
+- Functions also default to external linkage, and can be made internal using `static`
+
+## External linkage
+- To make external variable (accessible by other files), we can use `extern` keyword: `extern const int gY{ 3 };` (non-constant globals are external by default: `int gX{ 2 };`)
+- To forward declare a variable, use `extern` keyword, with no initialization value: `extern int gX; extern const int gY;`
+- `constexpr` globals can be defined by extern, but this is useless, because they can not be forward declared
+- Informally, the term "file scope" is more often applied to global variables with internal linkage, and "global scope" to those with external linkage.
+
+## Global constants and inline variables
+- We can define global constants in a header using constexpr (see `symbolic-constants.h`). In smaller programs this is OK, in bigger - they increase the compile times, as every source file including constants header will be recompiled on every small change in header. Also, if they can't be optimized away by a compiler, this can use a lot of memory. If we have 20 constants, and they take a lot of space, they are defined every time we include header in source file.
+- Another method - define constants in .cpp file as `extern const` (constexpr can't be extern), then do the forward declarations in .h file using `extern const` without initialization. The downsides are:
+    1. These constants are now considered compile-time constants only within the .cpp file they are defined in, not anywhere else, and thus can't be used anywhere that requires a compile-time constant.
+    2. The compiler may not optimize these as much (*side note* - for example, compiler can optimize constants by replacing the places where constants are used with their values, avoiding having to create and initialize a variable)
+- The best method (since C++17) - **inline variables** (see `symbolic-constants.h`)
+- The term *inline* has evolved to mean "multiple definitions are allowed"
+- Two restrictions of inline variables:
+    1. All definitions of the inline variable must be identical
+    2. Its definition (not forward declaration) must be present in any file that uses the variable
+- Inline global variables have external linkage by default
+- The linker will consolidate all inline definitions into single variable definition, so we can define variables in a header file and have them treated as if there was only one definition in .cpp file somewhere
+
+## Static local variables
+- `static` keyword changes a local variable's duration from *automatic* to *static*. This means the variable is now created at the start of the program, and destroyed at the end (like a global variable). Thus, it will retain its value when going out of scope
+- Avoid static local variables, unless the var never needs to be reset.
+
+## Using statements
+- Using directives (`using namespace std;`) and using declarations (`using std::cout;`) can be used inside blocks
+- Feature of using declarations: if there's a naming conflict between `std::cout` (which is being `using`'ed) and some other `cout`, std::cout is preferred (unlike using directives, where this would be an ambiguity error)
+- Avoid using directives; using declarations are O.K. to use inside blocks
