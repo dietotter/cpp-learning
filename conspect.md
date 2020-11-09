@@ -292,3 +292,19 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 - Using directives (`using namespace std;`) and using declarations (`using std::cout;`) can be used inside blocks
 - Feature of using declarations: if there's a naming conflict between `std::cout` (which is being `using`'ed) and some other `cout`, std::cout is preferred (unlike using directives, where this would be an ambiguity error)
 - Avoid using directives; using declarations are O.K. to use inside blocks
+
+# Type conversion
+## Typedefs
+- **Typedef** is an alias for type name. `typedef double distance_t;`. Now, `double howFar;` is equivalent to `distance_t howFar;`
+- **Type alias**: `using distance_t = double;`. Functionaly is equivalent to typedefs; doesn't have anything to do with using statements.
+- Type aliases should be favored to typedefs
+- Usage:
+    1. Legibility for some return values (`int gradeTest()` vs `testScore_t gradeTest()`)
+    2. Easier code maintenance (if we decide to change student id values to int from short, we can do it in one place: `using studentID_t = short;` => `using studentID_t = long;`)
+    3. Platform independent coding (that's how types with fixed sizes are defined - `int16_t` etc) - see `conspect/typedef-demo.cpp`
+    4. To make complex types simple (`using pairlist_t = std::vector<std::pair<std::string, int> >;`)
+
+## Auto keyword
+- When initializing a var, the `auto` keyword can be used in place of the type to tell the compiler to infer the variable's type from the initializer's type. This is called **type inference** (or type deduction): `auto d{ 5.0 };` or `auto i{ 1 + 2 };` or `auto sum{ add(5, 6) };`
+- Since C++14, `auto` was extended to be able to deduce a function's return type from return statements in function body: `auto add(int x, int y){ return x + y; }`. This should be avoided though.
+- **Trailing return syntax**: `auto add(int x, int y) -> int { return (x + y); }`
