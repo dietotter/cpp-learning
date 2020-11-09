@@ -212,3 +212,18 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 - Using bit flags is useful because:
     - We save memory. If we have 100 objects with each having 8 booleans defined, we'd use 800 bytes of memory. With bit flags, we'd use 8 bytes for the bit mask + 100 bytes for bit flag variables, which each weighs one byte
     - It's easier and more performant when, for example, passing flags to function. Instead of 32 arguments, we can pass only one
+
+# Scopes
+- It's a good idea to keep block nesting level to 3 or less (the maximum number of blocks you can be inside in a function)
+- Scope defines where a single declaration can be seen and used
+
+## Namespaces
+- We can use the scope resolution operator `::` without the preceding namespace. In this case, the identifier is looked for in global namespace (most of the times, `::print()` is equal to `print()`)
+- Namespaces can be nested. Also, in C++17 nested namespaces can be declared like this: `namespace foo::goo{ ... }`
+- You can have namespace aliases: `namespace boo = foo:goo;`. Now we can `std::cout << boo::add(1, 2);`
+- Namespaces should be used to separate application-specific code from reusable code (e.g. math and physics functions could go into separate namespace `math::`). Also, if a library or code will be distributed to others, its better to write it in own namespace
+
+## Local variables
+- **Storage duration** determines what rules govern how and when a variable is created and destroyed. In most cases, variable's duration directly determines its lifetime.
+- Local variables have automatic storage duration, which means they are created at the point of definition and are destroyed when the block ends. That's why they're sometimes called automatic variables.
+- Identifiers **linkage** determines whether other declarations of that name refer to the same object or nor. Local variables have no linkage, which means that each declaration refers to a unique object. E.g.: `conspect/local-variables.cpp`
