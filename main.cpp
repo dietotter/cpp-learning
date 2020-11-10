@@ -1,32 +1,19 @@
 #include <iostream>
 
-int getNumber()
+bool passOrFail()
 {
-    int num{};
+    static int userNum{ 1 };
 
-    std::cin >> num;
-
-    return num;
+    return userNum++ <= 3;
 }
- 
+
 int main()
 {
-    std::cout << "Enter an integer: ";
-	int smaller{ getNumber() };
-
-    std::cout << "Enter a larger one: ";
-	int larger{ getNumber() };
-
-    if (smaller > larger) {
-        std::cout << "Swapping values...\n";
-        
-        int tempo{ smaller };
-        smaller = larger;
-        larger = tempo;
-    } // tempo dies
-
-    std::cout << "Smaller: " << smaller << '\n';
-    std::cout << "Larger: " << larger << '\n';
+	std::cout << "User #1: " << (passOrFail() ? "Pass" : "Fail") << '\n';
+	std::cout << "User #2: " << (passOrFail() ? "Pass" : "Fail") << '\n';
+	std::cout << "User #3: " << (passOrFail() ? "Pass" : "Fail") << '\n';
+	std::cout << "User #4: " << (passOrFail() ? "Pass" : "Fail") << '\n';
+	std::cout << "User #5: " << (passOrFail() ? "Pass" : "Fail") << '\n';
  
 	return 0;
-} // smaller & larger die
+}

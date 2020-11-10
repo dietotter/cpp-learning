@@ -307,4 +307,40 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 ## Auto keyword
 - When initializing a var, the `auto` keyword can be used in place of the type to tell the compiler to infer the variable's type from the initializer's type. This is called **type inference** (or type deduction): `auto d{ 5.0 };` or `auto i{ 1 + 2 };` or `auto sum{ add(5, 6) };`
 - Since C++14, `auto` was extended to be able to deduce a function's return type from return statements in function body: `auto add(int x, int y){ return x + y; }`. This should be avoided though.
-- **Trailing return syntax**: `auto add(int x, int y) -> int { return (x + y); }`
+- **Trailing return syntax**: `auto add(int x, int y) -> int { return (x + y); }`. Traditional return syntax is preferred, though trailing one is used in lambdas. Lambdas also supported `auto` parameters since C++14.
+- Prior to C++20, generic functions that work with a variety of different types could be created using `function templates`
+- From C++20, we can use `auto` (which in this case does not perform type inference): `void addAndPrint(auto x, auto y){ std::cout << x + y; }`. You can use it as `addAndPrint(2, 3)` or `addAndPrint(2.5, 5.2)`
+
+## Implicit type converstion (coercion)
+- Is performed whenever one data type is expected, but a different one is provided. (e.g. `float f{ 3 };` If the compiler can figure out how to do the conversion - it will, otherwise - a compile error.
+- Two types: *promotion* and *conversion*
+- **Numeric promotion** (or *widening* for integers) is when a value of one fundamental data type is converted into a value of a larger fundamental data type from the same family. E.g. *int* => *long* (`long l{ 64 };`), *float* => *double* (`double d{ 0.12f };`)
+    - Integral promotion involves the conversion of integral types narrower than `int` (bool, char, unsigned char, signed char, unsigned short, signed short) to `int` or an `unsigned int`
+    - Floating point promotion - float => double
+- Under the hood, promotions generally involve extending the binary representation of a number (for integers, adding leading 0s)
+- **Numeric conversion** - when we convert a value from a larger type to a similar smaller, or between different types. Unlike promotion, could result in information loss (called *narrowing conversion*). Brace initialization doesn't allow narrowing conversions.
+- When evaluating expressions, compiler breaks down each expression into individual subexpressions. Arithmetic operators require their operands to be of the same type. To ensure this, compiler uses the following rules:
+    - If an operand is an integer narrower than `int`, it undergoes integral promotion to int/unsigned int
+    - If the operands still don't match, compiler finds the highest priority operand and implicitly converts the other operand to match. Priorities:
+        - long double (highest)
+        - double
+        - float
+        - unsigned long long
+        - long long
+        - unsigned long
+        - long
+        - unsigned int
+        - int (lowest)
+- The problem that could arise and why not to use unsigned integers: `std::cout << 5u - 10;` (*5u* - treat 5 as unsigned integer) evaluates to 4294967291 instead of -5, as 5u is higher priority than 10 and thus 10 is converted to unsigned int, and then the operation is performed
+
+## Explicit type conversion (casting) and static_cast
+- E.g.: `float f = 10 / 4;`. Will evaluate to *2.0*, because the operands are already of the same type (int), thus the operation will be performed, evaluating to 2, and then implicitly converted to 2.0
+- To tell compiler to use floating point division, we should use *type casting operator* (*cast*) to do **explicit type conversion**
+- There are 5 types of casts: *C-style casts*, *static casts*, *dynamic casts*, *const casts*, *reinterpret casts*. The latter 2 should be avoided, unless a very good reason to use them.
+- C-style casts: `int i1{ 10 }; int i2{ 4 }; float f{ (float)i1 / i2 };` (or `float(i1)`). Under the hood, it can perform a variety of different conversions depending on context. So avoid C-style casts.
+- **static_cast** provides compile-time checking. `float f{ static_cast<float>(i1) / i2 };`
+- We can use static_cast to make implicit type conversions clear. `int i{ 48 }; char ch = i;` - casting an int (4 bytes) to char (1 byte), the compiler would print a warning (if using list initialization `char ch{ i };` - an error). We explicitly tell the compiler that the conversion is intended, and hence no warnings/errors: `char ch{ static_cast<char>(i) };`
+
+## Unnamed and inline namespaces
+- **Unnamed namespace** (`namespace { void doSomething(){} }`) is treated as if it is a part of the parent namespace. The other effect is that all the identifiers inside it are treated as if they had *internal linkage*. This is also currently the only way to keep *user-defined types* local to the file
+- **Inline namespace** is like unnamed, but doesn't give everything *internal linkage*. Used to give ways to use newer versions of functions without breaking the existing programs (see `conspect/inline-namespace.cpp`)
