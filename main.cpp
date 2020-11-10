@@ -4,7 +4,7 @@ int sumTo(int num)
 {
     int sum{};
 
-    for (int i{ i }; i <= num; ++i)
+    for (int i{ 1 }; i <= num; ++i)
     {
         sum += i;
     }
