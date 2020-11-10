@@ -358,3 +358,10 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 - If we want to use different integer type for enum, we can specify it: `enum Color : std::uint8_least8_t { ... };`
 - If we want to forward declare the enum, we need to specidy the base: `enum Color : int;`. Because Color was forward declared, we need to specify the base at the definition too: `enum Color : int { ... };`
 - Because defining an enum doesn't allocate any memory, it's fine to define the enum in a header, and #include that header wherever needed
+- Enum class = enum struct
+
+# Structs
+- **Aggregate data type** is a data type that groups multiple individual variables together
+- Struct declarations don't take up any memory, so can be defined in header and included where needed
+- The minima; size of a struct is the sum of all its members (but not always, as for optimization purposes the compiler might add some bytes of padding. Read more: https://en.wikipedia.org/wiki/Data_structure_alignment)
+- See `conspect/structs.cpp`. The structs declared there are sometimes called *plain old data structs* (POD structs) since the members are all data (variable) members
