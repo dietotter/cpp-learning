@@ -1,52 +1,49 @@
 #include <iostream>
+#include <string>
  
-struct AdvertisingData
+enum class MonsterType
 {
-    int adsAmount;
-    double clickedPercent;
-    double averageProfit;
+    ogre, dragon, orc, giantSpider, slime
 };
 
-void printAdvertisingInfo(AdvertisingData advData)
+struct Monster
 {
-    std::cout << "From "<< advData.adsAmount << " ads, "
-        << advData.clickedPercent << "% of them were clicked, resulting in "
-        << advData.averageProfit << " dollars earned from each.\nOverall profit: "
-        << advData.adsAmount * advData.clickedPercent / 100 * advData.averageProfit << '\n';
-}
-
-struct Fraction
-{
-    int numerator;
-    int denominator;
+    MonsterType type { MonsterType::ogre };
+    std::string name { "Default Dude" };
+    int health { 10 };
 };
 
-Fraction readFraction()
+void printMonster(Monster monster)
 {
-    std::cout << "Numerator: ";
-    int numerator{};
-    std::cin >> numerator;
+    std::string monsterTypeName;
+    if (monster.type == MonsterType::ogre)
+    {
+        monsterTypeName = "Ogre";
+    } else if (monster.type == MonsterType::dragon)
+    {
+        monsterTypeName = "Dragon";
+    } else if (monster.type == MonsterType::orc)
+    {
+        monsterTypeName = "Orc";
+    } else if (monster.type == MonsterType::giantSpider)
+    {
+        monsterTypeName = "Giant spider";
+    } else
+    {
+        monsterTypeName = "Slime";
+    }
 
-    std::cout << "Denominator: ";
-    int denominator{};
-    std::cin >> denominator;
-
-    return { numerator, denominator };
-}
-
-double multiplyFractions(Fraction firstFr, Fraction secondFr)
-{
-    Fraction resultingFraction { firstFr.numerator * secondFr.numerator, firstFr.denominator * secondFr.denominator };
-
-    return static_cast<double>(resultingFraction.numerator) / resultingFraction.denominator;
+    std::cout << "This " << monsterTypeName << " is named "
+        << monster.name << " and has " << monster.health << " health.\n";
 }
 
 int main()
 {
-    Fraction firstFraction{ readFraction() };
-    Fraction secondFraction{ readFraction() };
+    Monster ogre{};
+    Monster slime{ MonsterType::slime, "Ryan", 140 };
 
-    std::cout << "Multiplication of fractions result: " << multiplyFractions(firstFraction, secondFraction) << '\n';
+    printMonster(ogre);
+    printMonster(slime);
 
     return 0;
 }
