@@ -400,3 +400,15 @@ Its accessible in the entire if-statement (e.g. in `else{...}` too)
 
 ## For loops
 - Variables in for loops have **loop scope** - they exist only within the loop
+
+# Random number generation
+- To produce random results, **pseudo-random number generators** (**PRNG**) should be **seeded** only once
+- `std::rand()` isn't a good PRNG, though the implementation can vary depending on compiler
+    - Has a relatively short **period** - the length of sequence before PRNG starts to repeat itself
+    - Small RAND_MAX - usually 32767 (15-bits)
+    - Isn't good to generate random floating number (usually used when doing statistical modelling)
+- When debugging, it is useful to set the seed (e.g. via `std::srand`) to a specific value (e.g. 0), to produce the same results
+- It's better to use Mersenne Twister (`std::mt19937`) or some other algorithm from `#include <random>`, provided from C++11, or some 3rd party library
+- Using a non-const global variable to create a global random number generator (so that it's only seeded once) is one of the exceptions, when it's O.K. to use a non-const global variable. It should be created in a namespace.
+- To have a different seed each time we run a program, we could use the number of seconds passed since Jan 1, 1970 - `static_cast<unsigned int>(std::time(nullptr))` for `std::srand()`. *std::time* is from `#include <ctime>`.
+- See the usage of std::rand() and Mersenne Twister in `conspect/random-generators.cpp`
