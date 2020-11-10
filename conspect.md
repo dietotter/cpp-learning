@@ -397,3 +397,6 @@ Its accessible in the entire if-statement (e.g. in `else{...}` too)
 
 ## While loops
 - For performance reasons, it's better to define non-fundamental variables (such as structs and classes) before the loop
+
+## For loops
+- Variables in for loops have **loop scope** - they exist only within the loop
