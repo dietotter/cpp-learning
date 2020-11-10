@@ -351,3 +351,10 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 - Using both *std::cin* and *std::getline* can result in unexpected behaviour, as *std::cin* captures the string as `"2\n"` (if you, for example, entered "2" to std::cin). Then, if we call `std::getline` to get some new string, it sees `'\n'` in buffer and thinks we entered an empty string. That's why, we need to remove the newline from the stream: `std::cin.ignore(32767, '\n'); // ignore up to 32767 chars until a \n is removed`. 32767 - the largest signed value guaranteed to fit a 2-byte integer on all platforms. The more correct, but more complex way would be: `std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore unlimited characters until a \n is removed`
 - To get the length of the string: `myString.length()` (seems like the return type is `size_t`)
 - `std::string` is a typedef to `std::basic_string<char>`
+
+# Enums
+- PRIOR TO C++11: Enumerators are placed into the same namespace as their enumeration, so enumerator name can't be used in multiple enumerations. That's why it's common to name enumerators with a prefix like "color" (`enum Color { colorRed, colorBlue };`)
+- FROM C++11: define `enum class` instead. Has strong typing rules, so each enum class is considered a unique type. No need to use prefixes for enumerators.
+- If we want to use different integer type for enum, we can specify it: `enum Color : std::uint8_least8_t { ... };`
+- If we want to forward declare the enum, we need to specidy the base: `enum Color : int;`. Because Color was forward declared, we need to specify the base at the definition too: `enum Color : int { ... };`
+- Because defining an enum doesn't allocate any memory, it's fine to define the enum in a header, and #include that header wherever needed

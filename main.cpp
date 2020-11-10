@@ -1,13 +1,16 @@
 #include <iostream>
 #include <string>
+
+enum class Race
+{
+    orc, goblin, troll, ogre, skeleton
+};
  
 int main()
 {
-  std::string str{ "I saw a red car yesterday." };  
- 
-  str.replace(8, 3, "blue");
- 
-  std::cout << str << '\n'; // I saw a blue car yesterday.
+  auto myRace { Race::troll };
+
+  std::cout << static_cast<int>(myRace);
  
   return 0;
 }
