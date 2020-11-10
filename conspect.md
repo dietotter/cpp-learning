@@ -385,5 +385,15 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 `if (std::string fullName{ firstName + ' ' + lastName}; fullName.length() > 20) { ... }`
 
 Its accessible in the entire if-statement (e.g. in `else{...}` too)
+
+## Switch
 - The expression in `switch(...)` should evaluate to integral type
 - Switch variable declaration nuances: see `conspect/switch.cpp`
+
+## Goto
+- *Goto statements* have **function scope** - they and the corresponding *statement labels* should appear in the same function
+- To see how goto statements and statement labels are used, see `conspect/goto.cpp`
+- Gotos should be avoided
+
+## While loops
+- For performance reasons, it's better to define non-fundamental variables (such as structs and classes) before the loop
