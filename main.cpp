@@ -1,49 +1,79 @@
 #include <iostream>
 #include <string>
- 
-enum class MonsterType
+
+enum class Animal
 {
-    ogre, dragon, orc, giantSpider, slime
+    pig, chicken, goat, cat, dog, ostrich, centipede
 };
 
-struct Monster
+std::string getAnimalName(Animal animal)
 {
-    MonsterType type { MonsterType::ogre };
-    std::string name { "Default Dude" };
-    int health { 10 };
-};
+    switch(animal)
+    {
+        case Animal::pig:
+            return "pig";
+        case Animal::chicken:
+            return "chicken";
+        case Animal::goat:
+            return "goat";
+        case Animal::cat:
+            return "cat";
+        case Animal::dog:
+            return "dog";
+        case Animal::ostrich:
+            return "ostrich";
+        default:
+            std::cout << "No such animal T_T\n";
+            return "???";
+    }
+}
 
-void printMonster(Monster monster)
+void printLegs(Animal animal)
 {
-    std::string monsterTypeName;
-    if (monster.type == MonsterType::ogre)
+    std::cout << getAnimalName(animal) << " has ";
+
+    switch(animal)
     {
-        monsterTypeName = "Ogre";
-    } else if (monster.type == MonsterType::dragon)
-    {
-        monsterTypeName = "Dragon";
-    } else if (monster.type == MonsterType::orc)
-    {
-        monsterTypeName = "Orc";
-    } else if (monster.type == MonsterType::giantSpider)
-    {
-        monsterTypeName = "Giant spider";
-    } else
-    {
-        monsterTypeName = "Slime";
+        case Animal::ostrich:
+        case Animal::chicken:
+            std::cout << '2';
+            break;
+        case Animal::pig:
+        case Animal::goat:
+        case Animal::cat:
+        case Animal::dog:
+            std::cout << '4';
+            break;
+        default:
+            std::cout << "no idea how many";
     }
 
-    std::cout << "This " << monsterTypeName << " is named "
-        << monster.name << " and has " << monster.health << " health.\n";
+    std::cout << " legs\n";
+}
+
+int calculate(int x, int y, char op)
+{
+    switch(op)
+    {
+        case '+':
+            return x + y;
+        case '-':
+            return x - y;
+        case '*':
+            return x * y;
+        case '/':
+            return x / y;
+        default:
+            std::cout << "Incorrect operator! Returning -1...\n";
+            return -1;
+    }
 }
 
 int main()
 {
-    Monster ogre{};
-    Monster slime{ MonsterType::slime, "Ryan", 140 };
-
-    printMonster(ogre);
-    printMonster(slime);
+    printLegs(Animal::cat);
+    printLegs(Animal::chicken);
+    printLegs(Animal::centipede);
 
     return 0;
 }

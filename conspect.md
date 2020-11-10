@@ -365,3 +365,25 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 - Struct declarations don't take up any memory, so can be defined in header and included where needed
 - The minima; size of a struct is the sum of all its members (but not always, as for optimization purposes the compiler might add some bytes of padding. Read more: https://en.wikipedia.org/wiki/Data_structure_alignment)
 - See `conspect/structs.cpp`. The structs declared there are sometimes called *plain old data structs* (POD structs) since the members are all data (variable) members
+
+# Control flow
+- **Execution path** (or *path*) - the sequence of statements that the CPU execures (from the top of main())
+- **Straight-line programs** have **sequential flow** - they take the same path (execute the same statements) every time they are run
+- **Control flow statements** (or *flow control statements*) allow the programmer to change the CPU's path through the program
+    - **Halt** tells the program to quit running immediately. In C++: `std::exit(int exitCode)`
+    - **Jump** unconditionally causes the CPU to jump to another statement. Keywords: `goto`, `break`, `continue`. Functions also cause jump-like behaviour - the CPU jumps to the top of the function when it is being called
+    - **Conditional branch** is a statement that causes the program to change the path based on the value of an expression. E.g. `if statement`, `switch`
+    - **Loop** causes the program to repeatedly execute series of statements until a given condition is false. E.g. `while`, `do while`, `for`. From C++11: `for each`
+    - **Exceptions** are triggered when an error occurs in a function that the function cannot handle. This causes the CPU to jump to the nearest block of code that handles exceptions of that type.
+- **Null statement** is a statement with no body, is declared by a single semicolon in place of the statement. It's typically placed on its own line:
+
+`if (x > 10) `
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;` ; // this is a null statement`
+- **Init statement** (since C++17) can be used before the condition in if-statement:
+
+`if (std::string fullName{ firstName + ' ' + lastName}; fullName.length() > 20) { ... }`
+
+Its accessible in the entire if-statement (e.g. in `else{...}` too)
+- The expression in `switch(...)` should evaluate to integral type
+- Switch variable declaration nuances: see `conspect/switch.cpp`
