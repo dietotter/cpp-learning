@@ -344,3 +344,9 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 ## Unnamed and inline namespaces
 - **Unnamed namespace** (`namespace { void doSomething(){} }`) is treated as if it is a part of the parent namespace. The other effect is that all the identifiers inside it are treated as if they had *internal linkage*. This is also currently the only way to keep *user-defined types* local to the file
 - **Inline namespace** is like unnamed, but doesn't give everything *internal linkage*. Used to give ways to use newer versions of functions without breaking the existing programs (see `conspect/inline-namespace.cpp`)
+
+# Strings
+- `std::cin` doesn't work correctly with strings having whitespaces in it, as it will return characters it meets before the first whitespace encountered. The other characters are left inside cin buffer until the next extraction.
+- To correctly get full line of string to input, we should use *std::getline()*: `std::string name{}; std::getline(std::cin, name);`
+- Using both *std::cin* and *std::getline* can result in unexpected behaviour, as *std::cin* captures the string as `"2\n"` (if you, for example, entered "2" to std::cin). Then, if we call `std::getline` to get some new string, it sees `'\n'` in buffer and thinks we entered an empty string. That's why, we need to remove the newline from the stream: `std::cin.ignore(32767, '\n'); // ignore up to 32767 chars until a \n is removed`. 32767 - the largest signed value guaranteed to fit a 2-byte integer on all platforms. The more correct, but more complex way would be: `std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore unlimited characters until a \n is removed`
+- To get the length of the string: `myString.length()` (seems like the return type is `size_t`)
