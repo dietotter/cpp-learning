@@ -442,3 +442,16 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
     - Aim for 100% loop coverage. Usually, it's good to perform the "0, 1, 2 test" - ensure that the loop works properly when it iterates 0, 1 or 2 times. 2 times usually means that 2+ times will work as well
     - Ensure testing different categories of input
     - Write test functions that contain both the tests and the expected answers (automated test functions)
+
+# Array
+- **Fixed array** is an array whose length is known at the compile time
+- To access elements or the array, we use **subscript operator** (`[]`) with a parameter, called **subscript** (**index**). This is called **subscripting** (**indexing**)
+- Array's **range** - array elements are numbered 0 through N-1
+- When declaring a fixed array, the length must be a compile-time constant (literal constant, symbolic constant etc). Non-const variables or runtime constants (`int temp{ 5 }; const int length{ temp };`) can't be used. This is because fixed array have memory allocated to them at compile-time.
+- `int array[5]{ 1, 2, 3 };` - other 2 values will zero-initialize. Also, it's always better to explicitly initialize arrays (`int array[5]{};`), even if they would be initialized later anyway.
+- We can omit length if we have initializer list: `int array[]{ 2, 3, 5, 7, 11 };` - will initialize array with length 5
+- To give indices a meaning, arrays can be set up with enums: see `conspect/array-enum.cpp`
+- Fixed arrays aren't copied, when passed to functions, the actual array is passed. To ensure that function does not modify the array, we can make the array const: `void passArray(const int prime[5]) { ... }`
+- `std::size(array)` from `#include <iterator>` is used to determine the length of the array. This function won't work for arrays passed to functions
+- `std::size()` can be used since C++17. Prior to that, the length of the array can be accessed by: `sizeof(array) / sizeof(array[0])` (this also doesn't work correctly for arrays passed to functions, as *sizeof* will return the size of pointer)
+- `std::size()` returns unsigned value. Since C++20, we could get signed value using `std::ssize()`
