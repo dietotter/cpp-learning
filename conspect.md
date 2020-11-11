@@ -412,3 +412,33 @@ Its accessible in the entire if-statement (e.g. in `else{...}` too)
 - Using a non-const global variable to create a global random number generator (so that it's only seeded once) is one of the exceptions, when it's O.K. to use a non-const global variable. It should be created in a namespace.
 - To have a different seed each time we run a program, we could use the number of seconds passed since Jan 1, 1970 - `static_cast<unsigned int>(std::time(nullptr))` for `std::srand()`. *std::time* is from `#include <ctime>`.
 - See the usage of std::rand() and Mersenne Twister in `conspect/random-generators.cpp`
+
+# std::cin, extraction and dealing with invalid text input
+- **Buffer** (*data buffer*) is a piece of memory set aside for storing data temporarily while it's moved from one place to another
+- When the extraction operator is used with *cin*, the following happens:
+    - If there is data in the buffer already, that data is used for extraction
+    - If input buffer contains no data, user is asked to input data for extraction. When user hits enter, '\n' char will be placed in the input buffer
+    - *Operator>>* extracts as much data from buffer as it can into the variable (ignoring leading spaces, tabs, \n)
+    - Any data that couldn't be extracted is left in the buffer for the next extraction
+
+E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, converted to int, and assigned to var x. "a\n" will be left in the input stream.
+- Basic ways to do input validation:
+    - Inline (as the user types): prevent the user from typing invalid input
+    - Post-entry:
+        - Let the user enter anything into a string, validate the string. If correct, convert it to final variable form
+        - Let the user enter anything, let `std::cin >>` try to extract it, handle the error cases
+- With `std::cin` such things could happen:
+    - The extraction could fail (lower on that)
+    - The user enters more input than expected (`12 asdasds s` instead of `12`)
+    - The user enters meaningless input (`k` instead of `*/+/-`)
+    - The user could overflow an input
+- If you try to extract invalid data into a variable using *std::cin* (e.g. user types letter 'a' when assigning to a `double` type variable, OR the user overflows some `short` variable), *cin* goes into failure mode. To fix the failure mode: `if (std::cin.fail()) { std::cin.clear(); std::cin.ignore(32767, '\n'); }`. Also, from C++11, a failed extraction zero-initialized a variable (prior to it it would stay uninitialized)
+
+# Testing
+- Tips:
+    - Write programs in small, well defined units (functions), and compile-test along the way
+    - **Code coverage** refers to how much of the source code is executed while testing. Tip: Aim for 100% statement coverage
+    - Aim for 100% branch coverage (all branches should be visited while testing, e.g. in if-ifelse-else statement)
+    - Aim for 100% loop coverage. Usually, it's good to perform the "0, 1, 2 test" - ensure that the loop works properly when it iterates 0, 1 or 2 times. 2 times usually means that 2+ times will work as well
+    - Ensure testing different categories of input
+    - Write test functions that contain both the tests and the expected answers (automated test functions)

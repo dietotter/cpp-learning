@@ -11,8 +11,8 @@ namespace MyRandom {
 int getRandomNumber(int min, int max)
 {
     // from C++17, we can use uniform_int_distribution without the <>
-    // prior to C++17, we need <> here
-	std::uniform_int_distribution<> die{ min, max }; // we can create a distribution in any function that needs it
+    // prior to C++17, we need to use uniform_int_distribution<>
+	std::uniform_int_distribution die{ min, max }; // we can create a distribution in any function that needs it
 	return die(MyRandom::mersenne); // and then generate a random number from our global generator
 }
  
