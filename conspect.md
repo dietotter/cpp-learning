@@ -483,3 +483,17 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
 - When using string_view, we need to make sure that the underlying string does not go out of scope and isn't modified.
 - *string_view* can be explicitly converted to *string*: `std::string_view sv{ "ball" }; std::string str{ sv }; std::string str2{ static_cast<std::string>(sv) };`
 - To convert to a c-style string, we need to first convert the string_view to string. Then `auto scNullTerminated{ str.c_str() };` This can be used, for example, for `strlen()` function, which expects c-style string. However, this should be avoided if possible.
+- We can use *std::string_view*'s `data()` function to access the underlying string, which returns a C-style string. But it should only be used if the string_view's view hasn't been modified, and the string being viewed is null-terminated.
+
+# Pointers
+- **Address-of operator** (**&**) allows us to see what memory address is assigned to a variable: `&x` => smth like `0x7ffee76787e8`
+- **Indirection operator** (**&ast;**), also called *dereference operator* allows us to access the value at a particular address: `*(&x)`
+- **Pointer** is a variable that holds a *memory address* as its value: `int *iPtr{};` The asterisk here is *not* an indirection, it's part of the pointer declaration syntax.
+- When declaring a pointer variable, it's better to put the asterisk next to the variable name: `double *dPtr{};`
+- When returning a pointer from function, it's clearer to put the asterisk next to the return type: `int* doSomething();`
+- Pointer nomenclature: "X pointer" is a common shorthand for "pointer to an X". *An integer pointer* means *a pointer to an integer*
+- You can't directly convert literal memory addresses to a pointer: `double *dPtr{ 0x0012FF7C };` is not allowed
+- Operator `&` doesn't return the address as a literal. It returns a pointer. (`int x{ 4 };`. `&x` will return an integer pointer, containing the address)
+- Indirection through a pointer evaluates to the contents of the address it is pointing to: `int *ptr{ &x };`. `*ptr` will contain the value 4 (assigned in a previous example)
+    - `ptr` <=> `&x`; `*prt` <=> `x`
+    - Because `*ptr` is treated the same as x, you can assign values to it just as if it was a variable `x`: `*ptr = 7; std::cout << x;` will print 7
