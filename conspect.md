@@ -455,3 +455,4 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
 - `std::size(array)` from `#include <iterator>` is used to determine the length of the array. This function won't work for arrays passed to functions
 - `std::size()` can be used since C++17. Prior to that, the length of the array can be accessed by: `sizeof(array) / sizeof(array[0])` (this also doesn't work correctly for arrays passed to functions, as *sizeof* will return the size of pointer)
 - `std::size()` returns unsigned value. Since C++20, we could get signed value using `std::ssize()`
+- Std array sort function: `std::sort(std::begin(array), std::end(array));` from `#include <algorithm>`
