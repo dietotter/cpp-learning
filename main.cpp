@@ -1,18 +1,32 @@
 #include <iostream>
- 
-void foo(int *&) // We cover & later. Don't worry about it for now, we're only using it to trick the compiler into thinking that p has a value.
+#include <iterator>
+
+// std::find is found in <algorithm> header
+int* find(int *first, int *last, int value)
 {
-    // p is a reference to a pointer.  We'll cover references (and references to pointers) later in this chapter.
-    // We're using this to trick the compiler into thinking p could be modified, so it won't complain about p being uninitialized.
-    // This isn't something you'll ever want to do intentionally.
+    for (int *i{ first }; i < last; ++i)
+    {
+        if (*i == value)
+        {
+            return i;
+        }
+    }
+    
+    return last;
 }
  
 int main()
 {
-    int *p; // Create an uninitialized pointer (that points to garbage)
-    foo(p); // Trick compiler into thinking we're going to assign this a valid value
-	    
-    std::cout << *p << '\n'; // Indirection through the garbage pointer
+    int arr[]{ 2, 5, 4, 10, 8, 20, 16, 40 };
+ 
+    // Search for the first element with value 20.
+    int *found{ find(std::begin(arr), std::end(arr), 20) };
+ 
+    // If an element with value 20 was found, print it.
+    if (found != std::end(arr))
+    {
+        std::cout << *found << '\n';
+    }
  
     return 0;
 }

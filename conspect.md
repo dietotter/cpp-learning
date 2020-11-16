@@ -1,3 +1,6 @@
+# Some terminology
+- Yield - отдавать/выдавать. Пример: Taking the address of a pointer yields the memory address of the pointer variable - Если мы возьмем адрес у указателя (имеется ввиду с помощью &), нам выдас адрес переменной, которая хранит этот указатель.
+
 # Data
 - Data is any information, that can be processed, stored and moved by computer.
 - Value is a single piece of data, stored somewhere in memory
@@ -497,3 +500,39 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
 - Indirection through a pointer evaluates to the contents of the address it is pointing to: `int *ptr{ &x };`. `*ptr` will contain the value 4 (assigned in a previous example)
     - `ptr` <=> `&x`; `*prt` <=> `x`
     - Because `*ptr` is treated the same as x, you can assign values to it just as if it was a variable `x`: `*ptr = 7; std::cout << x;` will print 7
+- The size of pointer is dependent upon the architecture the executable is compiled for - 32-bit executable uses 32-bit memory addresses. Consequently, a pointer on a 32-bit machine is 32 bits (4 bytes). This is regardless of the size of the object being pointed to.
+- Pointers are used for such cases as:
+    1. Arrays are implemented using pointers. Pointers can be used to iterate through an array (as an alternative to array indices)
+    2. They are the only way you can dynamically allocate memory in C++ (the most common use)
+    3. They can be used to pass a large amount of data to a function without ineffician copying of the data.
+    4. They can be used to pass a function as a parameter to another function.
+    5. They can be used to achieve polymorphism when dealing with inheritance.
+    6. They can be used to have one struct/class point to another struct/class to form a chain. Useful for some advanced data structures, such as trees or linked lists.
+
+## Null pointer
+- **Null value** is a special value that means the pointer isn't holding anything. Such pointer is called a **null pointer**
+- In C++: `float *ptr{ 0 };` or `float *ptr2; // ptr2 is uninitialized` next line: `ptr2 = 0;`. Both ptr and ptr2 are null pointers. Pointers convert to boolean false if they are null; to true if they are non-null.
+- Initialize pointers to a null value if not giving them another value.
+- Indirection through a null pointer results in undefined behaviour
+- `#include <cstddef>` has a preprocessor macro `NULL`: `double *ptr{ NULL };` The value of *NULL* is implementation defined, but it is usually defined as the integer constant 0. Because it is implementation defined, we should avoid using it.
+- From C++11, NULL can be defined as `nullptr`. This should be favored instead of 0 or NULL.
+- C++11 also introduces a type called `std::nullptr_t` (from header `<cstddef>`). It can only hold 1 value - nullptr. Useful when we eant a function that only accepts a nullptr argument: `void doSomething(std::nullptr_t ptr) { ... }`
+
+## Arrays and pointers
+- In all but 2 cases, when a fixed array is used in expression, it will **decay** (be implicitly converted) into a pointer that points to the first element of the array. `int array[3] { 5, 3, 4 };`. Then, `std::cout << &array[0]` and `std::cout << array` will both print the address of the first element in the array.
+- Array and a pointer to the array are not identical. Array is of type `int[5]` and its *value* is the array elements themselves. A pointer to the array is of type `int *` and its value would be the address of the first element of the array.
+- Information derived from array's type (such as it's length) can't be accessed from the pointer.
+- We can assign the pointer to point at the array: `int array[3]{ 4, 3, 5 }; int *ptr{ array };`. `std::cout << *array` will print 9. `std::cout << *ptr` will print 9. This works because the array decays into a pointer of type `int *`.
+- Differences between pointers and fixed arrays:
+    - The primary difference occurs when using the sizeof() operator. When used on a fixed array, it returns the size of the entire array (length * element size). When used on a pointer, sizeof returns the size of a memory address in bytes.
+    - The second difference occurs when using the address-of operator (&). If we take the address of the pointer (&ptr), we will get the memory address of that pointer variable (memory address of ptr). Taking the address of the array returns a pointer to the entire array. This pointer also points to the first element of the array, but the type information is different (e.g., the type of the above array is `int(*)[3]`)
+- When passing an array as an argument to function, fixed array decays into a pointer and the pointer is passed to the function (even if the parameter in function is declared as a fixed array: `void printSize(int array[]) {...}` <=> `void printSize(int *array) {...}`). The recommendation is to favor the pointer syntax (*), because it is clearer, that the parameter will operate as a pointer.
+- The last point is also the reason why changing an array in a function changes the actual array argument passed in. `void changeArray(int *ptr) { *ptr = 5; }` - the argument array, passed to this function, will have its first element changed to 5. This thing also works with pointers to non-array values as well.
+- The arrays that are part of structs or classes do not decay when the whole struct or class is passed to a function.
+
+## Pointer arithmetics
+- If `ptr` points to an integer, `ptr + 1` returns the address of the next integer in memory after `ptr`, `ptr - ` - of the previous. Note that `ptr + ` returns not the memory address after `ptr`, but the *memory address of the next object of the type* that `ptr` points to. If `ptr` points to an integer (assuming 4 bytes), `ptr + 3` means 3 integers (12 bytes) after `ptr`.
+- When calculating the result of a pointer arithmetic expression, the compiler always multiplis the integer operand by the size of the object being pointed to. This is called **scaling**
+- Arrays are laid out sequentially in memory
+- `array[n]` <=> `*(array + n)`. The subscript operator ([]) is identical to an addition and indirection. That's why, `arr[2]` is the same as `*(arr + 2)` same as `*(2 + arr)` same as `2[arr]` (this only works for the build-in subscript operator)
+- To count, for example, vowels in a word (`char name[]{ "Vasya" };`), we can use `std::count_if(std::begin(name), std::end(name), isVowel);`. std::begin/end only work on arrays with known size. If the array decayed to a pointer, we can calculate begin and end manually: `std::count_if(name, name + nameLength, isVowel)`
