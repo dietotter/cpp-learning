@@ -450,9 +450,36 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
 - When declaring a fixed array, the length must be a compile-time constant (literal constant, symbolic constant etc). Non-const variables or runtime constants (`int temp{ 5 }; const int length{ temp };`) can't be used. This is because fixed array have memory allocated to them at compile-time.
 - `int array[5]{ 1, 2, 3 };` - other 2 values will zero-initialize. Also, it's always better to explicitly initialize arrays (`int array[5]{};`), even if they would be initialized later anyway.
 - We can omit length if we have initializer list: `int array[]{ 2, 3, 5, 7, 11 };` - will initialize array with length 5
-- To give indices a meaning, arrays can be set up with enums: see `conspect/array-enum.cpp`
+- To give indices a meaning, arrays can be set up with enums: see `conspect/arrays/array-enum.cpp`
 - Fixed arrays aren't copied, when passed to functions, the actual array is passed. To ensure that function does not modify the array, we can make the array const: `void passArray(const int prime[5]) { ... }`
 - `std::size(array)` from `#include <iterator>` is used to determine the length of the array. This function won't work for arrays passed to functions
 - `std::size()` can be used since C++17. Prior to that, the length of the array can be accessed by: `sizeof(array) / sizeof(array[0])` (this also doesn't work correctly for arrays passed to functions, as *sizeof* will return the size of pointer)
 - `std::size()` returns unsigned value. Since C++20, we could get signed value using `std::ssize()`
 - Std array sort function: `std::sort(std::begin(array), std::end(array));` from `#include <algorithm>`
+
+## Two-dimensional array
+- Two-dimensional arrays with initializer lists can only omit the leftmost length specification: `int array[][3]{ { 1, 2 }, { 3, 4 }, { 8, 7 } };`
+
+## C-style string
+- **C-style string** is an array of chars, that uses a null terminator ('*\0*', ascii code 0), used to indicate the end of the string. C-style string is also called a *null-terminated string*.
+- To define it: `char myString[] { "string" };` (it will have length 7, not 6, as C++ automatically adds a null terminator to the end)
+- You can change individual characters: `myString[1] = 'p';`, but you can accidentally rewrite null terminator (in this case, by assigning to `myString[6]`). This way, std::cout will keep printing everything in adjacent memory until it happens to hit a null terminator.
+- It's fine if the array is larger than the string it contains (`char name[20]{ "Shrek" };`). std::cout will print "Shrek" and stop at null terminator, ignoring the rest.
+- The recommended way of reading C-style strings using *cin*: `char name[255]; std::cin.getline(name, std::size(name));` - this way, *getline()* will read up to 254 characters (leaving room for null terminator), and discard the excessing chars.
+- Functions to manipulate C-style strings are in `#include <cstring>`.
+- To copy a string to another string, see `conspect/arrays/copy-c-string.cpp`
+- `std::strlen()` returns the length of the C-style string (without the null terminator) (whereas `std::size`, for example, would return the size of the array, when used on a C-style string)
+- Some other functions:
+    - `strcat()` - append one string to another (dangerous)
+    - `strncat()` - append one string to another (with buffer length check)
+    - `strcmp()` - compare 2 strings (returns 0 if equal)
+    - `strncmp()` - compare 2 strings up to a specific number of chars (returns 0 if equal)
+- Unless I have a specific reason to use C-style strings, it's better to avoid them, and use `std::string` from `#include <string>`. If I need to work with fixed buffer sizes and C-style strings (e.g. for memory-limited devices), it'd be better to use a well-tested 3rd party library, or `std::string_view`
+
+## std::string_view
+- Instead of C-style strings, use `std::string_view` (see `conspect/arrays/string-view.cpp`)
+- Prefer *std::string_view* over *std::string* for read-only strings, unless you already have a *std::string*
+- *std::string_view* can work with non-null-terminated strings (it's safe)
+- When using string_view, we need to make sure that the underlying string does not go out of scope and isn't modified.
+- *string_view* can be explicitly converted to *string*: `std::string_view sv{ "ball" }; std::string str{ sv }; std::string str2{ static_cast<std::string>(sv) };`
+- To convert to a c-style string, we need to first convert the string_view to string. Then `auto scNullTerminated{ str.c_str() };` This can be used, for example, for `strlen()` function, which expects c-style string. However, this should be avoided if possible.
