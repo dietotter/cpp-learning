@@ -587,3 +587,64 @@ Three types of memory allocations:
 - Dynamic array functions identically to a decayed fixed array, with the exception that the programmer is responsible for memory deallocation
 - Prior to C++11, you couldn't initialize a dynamic array to a non-zero value easily (initializer lists only worked for fixed arrays)
 - The author or learncpp tells that it's better to not resize dynamically alloced array yourself, and instead use `std::vector` (? is it always true ?)
+
+## Const pointers
+- We can't set non-const pointers to a const var.
+
+`const int value = 5; int *ptr = &value;` - compile error.
+- A **pointer to a const value** is a (non-const) pointer that points to a constant value.
+
+`const int value = 5; const int *ptr = &value;` - O.K., ptr is a non-const pointer that is pointing to a "const int".
+
+`int value = 5; const int *ptr = &value;` - this is still O.K., a pointer to a constant variable treats the variable as constant when it is accessed through the pointer, regardless of whether variable was or wasn't defined as const. Thus, we can do `value = 6;`, but not `*ptr = 6;`.
+
+Because a pointer to a const value isn't const itself, it can be redirected to point at other values: `ptr = &value2;`
+- A **const pointer** is a pointer whose value can not be changed after initialization.
+
+`int value = 5; int *const ptr = &value;`. Acts like a normal const variable: `ptr = &value2;` is not allowed. However, because the *value* itself isn't const, it's possible to change the value through an indirection: `*ptr = 6;` - this is O.K.
+- It is possible to declare a **const pointer to a const value**: `int value = 5; const int *const ptr = &value;`
+
+# Reference variables
+- **Reference** is a type of C++ variable (third basic type of variable C++ supports) that acts as an alias to another object or value
+- 3 kinds of references:
+    1. References to non-const values ("references", "non-const references")
+    2. References to const values ("const references")
+    3. r-value references (from C++11)
+- Reference is declared by using an ampersand (&) between the reference type and the var name: `int value{ 5 }; int &ref{ value };`. In this context, ampersand doesn't mean "address of", but means "reference to"
+- References generally act identically to the values they're referencing: from previous point, `ref = 6;` - now `value` is also 6.
+- The address-of operator on references returns the address of the value being referenced: `cout << &value;` prints equal address as `cout << &ref;`
+
+## l-values and r-values
+- In C++, vars are a type of l-value. **l-value** is a value that has an address (in memory). Since all vars have addressed, they are l-values.
+- l-values are the only values that can be on the left side of an assignment statement. `5 = 6;` causes a compile error as 5 is not l-value
+- **r-value** is an expression that's not an l-value. Examples are literals (like *5*, which evaluates to 5) and non-l-value expressions (such as 2 + x)
+- *const* variables are considereed non-modifiable l-values
+
+## Back to references
+- References must be initialized when created: `int &invalidRef;` - compile error. There is no such thing as null reference
+- References to non-const vars can only be initialized with non-const l-values
+- Refs can't be reassigned: `int value1{ 5 }; int value2{ 6 }; int &ref{ value1 }; ref = value2;` - assigns 6 to value1 - doesn't change the reference
+- References, when used as function parameters, act as an alias for the argument, so no copy of the argument is made into the parameter. A function that uses a reference parameter is able to modify the argument passed in: `void changeN(int &ref){ ref = 6 };`. Now we can call `changeN(n);` and the variable n will be changed to 6 through the reference *ref*. The primary downside of this is that the argument must be a non-const l-value
+- C-style arrays do not decay when passed by reference: see `conspect/arrays/c-style-array-reference.cpp`
+- References can also be used as shortcuts: `int &ref{ other.something.value1 };`
+
+## References vs pointers
+- A reference acts like a pointer that implicitly performs indirection through it when accessed (references are usually implemented internally by the compiler using pointers)
+
+`int value{ 5 }; int *const ptr{ &value }; int &ref{ value };` - `*ptr` and `ref` evaluate identically, thus `*ptr = 5;` <=> `ref = 5;`
+- Because references must be initialized to valid objects (can't be null) and can not be changed once set, refs are generally much safer to use than pointers (no risk of indirection through a null pointer). However, they are also a bit more limited in functionality
+- If task can be solved with either reference or pointer, reference should generally be preferred
+- Pointers should only be used in situations where refs are not sufficient (such as dynamically allocating memory)
+
+## References and const
+- **Const reference** (reference to a const value): `const int value{ 5 }; const int &ref{ value };`
+- They can be initialized with const l-values, r-values (`const int& ref2{ 6 };`), non-const l-values:
+
+`int x{ 5 }; const int& ref3{ x };`. Much like a pointer to a const value, when accessed through a reference to a const value, the value is considered const even if the original variable is not: `x = 6;` is O.K., `ref = 7;` is not.
+- Reference to r-values extend their lifetime to match the lifetime of the ref (normally, r-values have expression scope)
+- Const references in function parameters allow us to access the argument without making the copy of it, while guaranteeing the function won't change it's value
+
+`void printIt(const int &x) { std::cout << x; }`
+- The last point is also useful because of it's versatility. We can pass in non-const l-value argument, const l-value, literal, or result of the expression:
+
+`int a{ 1 }; printIt(a); const int b{ 2 }; printIt(b); printIt(3); printIt(2 + b);`
