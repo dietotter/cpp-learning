@@ -3,48 +3,43 @@
 #include <cstddef>
 #include <algorithm>
 
-std::size_t askForNamesAmount()
+std::string askForName()
 {
-    std::cout << "How many nameZZZ: ";
+    std::string name{};
 
-    std::size_t nameAmount{};
-    std::cin >> nameAmount;
+    std::cout << "Enter dis nahme: ";
+    std::cin >> name;
 
-    return nameAmount;
+    return std::string{ name };
 }
 
-void fillInNames(std::string *nameArray, std::size_t length)
+bool nameExists(const std::string_view (&nameArray)[4], std::string_view typedName)
 {
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // so that previous std::cin doesn't fuck us up
-
-    for (std::size_t counter = 0; counter < length; ++counter)
+    for (auto name : nameArray)
     {
-        std::cout << "Enter dis nahme #" << counter + 1 << " plssz: ";
-        std::getline(std::cin, nameArray[counter]);
+        if (name == typedName)
+        {
+            return true;
+        }
     }
-}
 
-void printNames(std::string *nameArray, std::size_t length)
-{
-    for (std::size_t counter = 0; counter < length; ++counter)
-    {
-        std::cout << "Sorted nahme #" << counter + 1 << ": " << nameArray[counter] << '\n';
-    }
+    return false;
 }
  
 int main()
 {
-    std::size_t nameAmount{ askForNamesAmount() };
+    constexpr std::string_view nameArray[]{ "Alex", "Huyalex", "Betty", "Huyetty" };
 
-    auto *nameArray{ new std::string[nameAmount]{} };
+    std::string_view typedName{ askForName() };
 
-    fillInNames(nameArray, nameAmount);
-
-    std::sort(nameArray, nameArray + nameAmount);
-
-    printNames(nameArray, nameAmount);
-
-    delete[] nameArray;
+    if (nameExists(nameArray, typedName))
+    {
+        std::cout << typedName << " was found.";
+    }
+    else
+    {
+        std::cout << typedName << " was not found.";
+    }
  
     return 0;
 }

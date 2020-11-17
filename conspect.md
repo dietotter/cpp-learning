@@ -648,3 +648,29 @@ Because a pointer to a const value isn't const itself, it can be redirected to p
 - The last point is also useful because of it's versatility. We can pass in non-const l-value argument, const l-value, literal, or result of the expression:
 
 `int a{ 1 }; printIt(a); const int b{ 2 }; printIt(b); printIt(3); printIt(2 + b);`
+- Some rules about passing to functions:
+    - To avoid making potentially exprensive unnecessary copies, vars that are not pointers or fundamental data types should be passed by (const) reference
+    - Fundamental data types should be passed by value, unless the function needs to change them
+    - There are few exceptions, namely types that are so small that it's faster for the CPU to copy them than having to perform an extra indirection for a reference (e.g., `std::string_view`)
+
+## Member selection with pointers and refs
+- Normal variables: `person.age`; refs: `ref.age` (the same); pointers: `ptr->age` or `(*ptr).age` (the `->` variant is preferred)
+
+# For-each loops
+- Simpler and safer type of loops - **for-each loop** (also **range-based for-loop**) for cases where we want to iterate through every element in an array (or other list-type structure): `for (element_declaration : array) { statement; }`
+- This is an ideal case to use `auto` keyword:
+
+`constexpr int fibonacci[]{ 0, 1, 1, 2, 3, 5, 8, 13, 21 };`
+
+`for (auto number : fibonacci) { std::cout << number << ' '; }`
+- We can use references (and const references) in for-each loops. It's better to do it for non-fundamental type elements to avoid expensive copying:
+
+`std::string array[]{ "nik", "likes", "frozen", "cock" };`
+
+`for (const auto &element : array) { std::cout << element; }`
+
+- For-each loops also works with `std::vectors` and other list-like structures
+
+- For-each loops don't work with decayed and dynamic arrays, because arrays that have decayed into a pointer don't know their size, and for-each loops need it
+
+- From C++20, for-each loops can have *init-statement*: `for (int i{ 0 }; auto score : scores) { ...; ++i; }` (be careful when using `continue`, so that `++i` doesn't get skipped)
