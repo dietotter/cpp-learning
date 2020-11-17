@@ -740,3 +740,29 @@ Fortunately, that's just an alias for *std::size_t*, so we can use that instead:
 - Resizing vector is computationally expensive, so if I need a vector with specific num of elems but don't know the values of the elems at the point of declaration, I can create a vector with default elements like so: `std::vector<int> array(5);`. Using direct initialization, we can create a vector with 5 elems and init them to 0. If we use brace initialization here, the vector would have 1 elem, which would be the integer 5. *A rule of thumb:* if a type is some kind of list and I don't want to init it with a list, use direct initialization
 - Using `std::vector`, we can compact 8 booleans into a single byte: `std::vector<bool> array{ true, false, false, true, true };`
 - Prefer using `std::vector` over build-in dynamic arrays
+
+# Iterators
+- **Iterator** is an object designed to traverse through a container (e.g. values in array, chars in a string), providing access to each element along the way
+- Container may provide different kinds of iterators - e.g., array container might offer a forwards iterator, and reverse iterator (walks through array in reverse order)
+- C++ iterators typically use the same interface for traversal (`operator++` to move to the next element) and access (`operator*` to access the current element), we can iterate through a wide variety of different container types using a consistent method
+- Simplest kind of iterator - pointer iterator (using pointer arithmetics): see `conspect/iterators/pointer-iterator.cpp`
+- All types that have `begin()` and `end()` member functions or can be used with `std::begin` and `std::end` are usable in range-based for-loops (for-each loops). Including user-defined types
+- If the elements being iterated over change address or are destroyed, the iterator becomes **invalidated** (*dangling*, like pointers and references can be)
+- Some operatuons that modify containers (such as adding elem to *std::vector*) can cause elems in the container to change addresses. When this happens, existing iterators will be invalidated. Good C++ reference documentation should note which container operations may or will invalidate iterators
+
+# Standard library algorithms
+- The functionality provided in algorithms library generally fall into one of three categories:
+    1. **Inspectors** - used to view (but not modify) data in container (e.g. searching, counting)
+    2. **Mutators** - used to modify data in container (e.g. sorting, shuffling)
+    3. **Facilitators** - used to generate a result based on values of the data members (e.g. objects that multiply values, objects that determine what order pairs of elements should be sorted in)
+- Some examples:
+    - `std::find` searches for the first occurence of a value in a container. Takes in 3 params: iterator to the starting elem in the sequence, iterator to the ending elem in the sequence, value to search for. Returns an iterator pointing to the element (if it is found) or the end of container (if not found). See `conspect/standard-algorithms/find.cpp`
+    - `std::find_if` searches for value in container that matches some condition. Similar to *std::find*, but instead of passing a value to search for, we pass in a callable object, such as function pointer or a lambda, that checks to see if a match is found. See `conspect/standard-algorithms/find-if.cpp`
+    - `std::count` and `std::count_if` to search for all occurrences of an elem or an elem fulfilling a condition. See `conspect/standard-algorithms/count.cpp`
+    - `std::sort` to sort an array in ascending order, but also there is a *std::sort* version which takes a **comparison function** as 3rd param that allows us to sort by our own conditions. That function takes two params to compare and returns true if the first argument should be ordered before the second. See `conspect/standard-algorithms/sort.cpp`
+        - Because sorting in descending order is popular, C++ provides a custom type `std::greater` (part of `<functional>` header) for that. So we can `std::sort(arr.begin(), arr.end(), std::greater{});` (before C++17, we'd have to specify the type `std::greater<int>{}`)
+        - See how `std::sort` uses the comparison function in `conspect/standard-algorithms/sort-with-comparison.cpp` using the example of selection sort
+    - `std::for_each` takes a list as input and applies a custom function to every element. See `conspect/standard-algorithms/for-each.cpp` (there's also why it might be better to use `std::for_each` rather than *range-based for-loops*)
+- Many standard algorithms can be parallelized to achieve faster processing
+- Most standard algorithms don't guarantee a particular order of execution. For such algos, ensure any functions you pass in do not assume a particular ordering. Some algorithms do guarantee sequential execution: `std::for_each`, `std::copy`, `std::copy_backward`, `std::move`, and `std::move_backward`
+- C++20 adds *ranges*, which allow us to simply pass *arr*, without having to pass *arr.begin()* and *arr.end()*
