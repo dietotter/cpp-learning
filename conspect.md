@@ -547,6 +547,35 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
 - `int nArray[5]{ 9, 7, 5, 3, 1 }; char cArray[]{ "Hello!" }; const char *name{ "Nik" };`. If we `std::cout` each of them, nArray will decay to type `int*` and print out something like *0x7ffeeb5487d0*; cArray will decay to type `char*` and print out *Hello!*; name is already `char*` and prints out *Nik*. This is because std::cout prints the contents of non-char pointer, but if you pass `char*` or `const char*`, it will print the string.
 - The above point can be a problem when: `char c{ 'Q' }; std::cout << &c;`. Because &c has type char*, cout tries to print it as a string, so it will print Q, then some nonesence, until it runs into 0, which will be interpreted as a null-terminator (THOUGH I didn't experience such thing on my MacBook when compiling by gcc)
 
+## Void pointers
+- **Void pointer** (also *generic pointer*) is a special type of pointer that can be pointed at objects of any data type:
+
+`Something sValue; int nValue;`
+
+`void *ptr; ptr = &sValue; ptr = &nValue;`
+- Direct indirection through void pointer is not possible, it must first be explicitly case to another pointer type:
+
+`int *intPtr{ static_cast<int*>(ptr) }; std::cout << *intPtr;`
+- Can be set to a null value: `void *ptr{ nullptr };`
+- Although some compilers allow deleting a void pointer that points to dynamically allocated memory, this should be avoided, because it leads to undefined behaviour.
+- Pointer arithmetic can't be done on void pointer (it doesn't know the size of the object it is pointing to)
+- There is no such thing as void reference
+- It's better to avoid void pointers unless absolutely necessary (many places where they would be once used are done through things like *function overloading*, *templates*)
+
+## Pointers to pointers
+- `int **ptrptr;`
+- Indirection to get int value: `std::cout << **ptrptr;` (two consecutive indirections)
+- You can't set a pointer to a poinert directly to a value: `int **ptrptr = &&value;` - not valid, because *operator&* requires an lvalue, but `&value` is an rvalue.
+- Can be set to nullptr.
+- Usage:
+    - The most common - dynamically allocate an array of pointers: `int **array = new int*[10];` - allocate an array of 10 int pointers
+    - Another common - to facilitate dynamically allocated multidimensional arrays. Two possible solutions:
+        1. Works if all non-leftmost array dimensions are compile-time constants: `int (*array)[5] = new int[10][5];` (from C++11: `auto array = new int[10][5];`)
+        2. See `conspect/arrays/pointer-two-dimensional-array.cpp`
+- We can pass a pointer to a pointer to a function and use that pointer to change the value of the pointer it points to. However, it's better to use a reference to a pointer instead.
+- We can do `int ***ptrx3;` and so on (but why?)
+- It's recommended to avoid pointers to pointers unless there are no other options available
+
 # Dynamic memory allocation
 Three types of memory allocations:
 1. **Static** - happens for static and global variables. Memory for these types of vars is allocated once when the program is run and persists throughout the life of the program.
@@ -674,3 +703,40 @@ Because a pointer to a const value isn't const itself, it can be redirected to p
 - For-each loops don't work with decayed and dynamic arrays, because arrays that have decayed into a pointer don't know their size, and for-each loops need it
 
 - From C++20, for-each loops can have *init-statement*: `for (int i{ 0 }; auto score : scores) { ...; ++i; }` (be careful when using `continue`, so that `++i` doesn't get skipped)
+
+# std::array
+- `std::array<int, 3> myArray{ 3, 2, 4 };`. Like fixed arrays, the length must be known at compile time
+- From C++17, we can ommit the type and size: `std::array myArray{ 2, 1, 4 };`
+- From C++20, we can specify the element type, but omit the array length:
+
+`auto myArray1{ std::to_array<int, 3>({ 3, 2, 4 }) }; // specify type and size`
+
+`auto myArray1{ std::to_array<int>({ 3, 2, 4 }) }; // deduce size`
+
+`auto myArray1{ std::to_array({ 3, 2, 4 }) }; // deduce type and size`
+- However, *std::to_array* is more exprensive than creating *std::array* directly, because it copies all elems from C-style array to std::array. So, std::to_array should be avoided when the array is created many times, e.g. in a loop.
+- To access std::array elem, we can use subscript operator as usual ([]), or `myArray.at(index)`. *.at()* is safer (because it does bounds checking, trying to *.at()* out of bounds index will throw an exception), but slower.
+- std::array will clean up after itself when it goes out of scope
+- `myArray.size()` can be used to retrieve the length
+- We should always pass *std::array* by reference/const reference
+- For-each works with std::array, also std::sort: `std::sort(myArray.begin(), myArray.end());`
+- The `myArray.size()` and index in *operator[]* of *std::array* both are of type `size_type` which is defined by the C++ standard as an unsigned integral type. It isn't a global type, it's defined inside the definition of std::array (C++ allows nested types). If we want to use *size_type*, we have to prefix it with full array type. For *myArray*:
+
+`for (std::array<int, 3>::size_type i{ 0 }; i < myArray.size(); ++i) { std::cout << myArray[i] << ' '; }`
+
+Fortunately, that's just an alias for *std::size_t*, so we can use that instead: `std::array<int, 3>::size_type` <=> `std::size_t`. But it might be best to avoid manual indexing of std::array in the first place.
+- The working reverse for-loop for unsigned integers looks like this: see `conspect/arrays/unsigned-reverse-for-loop.cpp`
+- To initialize array of struct with brace initialization, there are some nuances, see [Array of struct](https://www.learncpp.com/cpp-tutorial/6-15-an-introduction-to-stdarray/)
+- Prefer using `std::array` over build-in fixed arrays
+
+# std::vector
+- `std::vector` provides dynamic array functionality that handles its own memory management. Lives if `<vector>` header. Declaration: `std::vector<int> array{ 1, 3, 5 };`
+- Since C++17, we can omit type: `std::vector array{ 1, 3 ,5 };`
+- Accessing array elements is just like `std::array`
+- As of C++11, we can assign values to `std::vector` using initializer list: `array = { 0, 1, 5, 3, 6 };` In this case, the vector will self-resize to match the number of elements provided
+- Prevents memory leaks, as the memory will be deallocated as soon as `std::vector` instance goes out of scope
+- Unlike build-in dynamic arrays, keeps track of length (`size()`). Returns `size_type`, as in std::array
+- Resize a vector: `array.resize(7)`. Existing elements are preserved, new elements are initialized to default value for the type (for *int* it's 0). Can be resized to be smaller too.
+- Resizing vector is computationally expensive, so if I need a vector with specific num of elems but don't know the values of the elems at the point of declaration, I can create a vector with default elements like so: `std::vector<int> array(5);`. Using direct initialization, we can create a vector with 5 elems and init them to 0. If we use brace initialization here, the vector would have 1 elem, which would be the integer 5. *A rule of thumb:* if a type is some kind of list and I don't want to init it with a list, use direct initialization
+- Using `std::vector`, we can compact 8 booleans into a single byte: `std::vector<bool> array{ true, false, false, true, true };`
+- Prefer using `std::vector` over build-in dynamic arrays

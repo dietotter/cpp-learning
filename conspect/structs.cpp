@@ -18,6 +18,12 @@ struct Company
     int numberOfEmployees;
 };
 
+struct SomeStruct
+{
+    int arr[3]{};
+    int i{};
+};
+
 int main()
 {
     // like normal vars, struct member variables which are not initialized will contain junk
@@ -41,6 +47,11 @@ int main()
 
     // using nested initializer list
     Company myCompany{ { 4, 42, 60000.0 }, 5 };
+
+    // Braces can be omitted during aggregate initialization:
+    // These two do the same
+    SomeStruct s1{ { 1, 2, 3 }, 4 };
+    SomeStruct s2{ 1, 2, 3, 4 };
 }
 
 struct Point3d
