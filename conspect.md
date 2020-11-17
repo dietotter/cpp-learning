@@ -546,3 +546,44 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
         - As a result of string literals being stored in a fixed location in memory, they have static duration (they die at the end of the program). That means, the following is okay: `const char* getName() { return "Nik"; }`. In this code, `getName()` will return a pointer to C-style string "Nik". If the function was returning any other local variable by address, the variable would be destroyed at the end of *getName()* and we'd return a dangling pointer back to the caller. However, because string literals have static duration, the caller can still successfully access "Nik".
 - `int nArray[5]{ 9, 7, 5, 3, 1 }; char cArray[]{ "Hello!" }; const char *name{ "Nik" };`. If we `std::cout` each of them, nArray will decay to type `int*` and print out something like *0x7ffeeb5487d0*; cArray will decay to type `char*` and print out *Hello!*; name is already `char*` and prints out *Nik*. This is because std::cout prints the contents of non-char pointer, but if you pass `char*` or `const char*`, it will print the string.
 - The above point can be a problem when: `char c{ 'Q' }; std::cout << &c;`. Because &c has type char*, cout tries to print it as a string, so it will print Q, then some nonesence, until it runs into 0, which will be interpreted as a null-terminator (THOUGH I didn't experience such thing on my MacBook when compiling by gcc)
+
+# Dynamic memory allocation
+Three types of memory allocations:
+1. **Static** - happens for static and global variables. Memory for these types of vars is allocated once when the program is run and persists throughout the life of the program.
+2. **Automatic** - for function parameters and local variables. Memory for these types of vars is allocated when the relevant block is entered, and freed when the block is exited, as many times as necessary.
+
+*Static* and *automatic* allocation have two things in common:
+- The size of the var / array must be known at compile-time.
+- Memory alloc and deallocation happens automatically when the variable is instantiated / destroyed.
+
+3. **Dynamic** - running programs are responsible for requesting the memory from the OS when needed, and also for freeing it.
+
+- If we have to declare the size of everything at compile time, the best we can do is try to make a guess the maximum size of vars we'll need. But that's bad for such reasons:
+    1. It leads to wasted memory, which is not being used
+    2. It's hard to tell which bits of memory are actually used
+    3. Most normal variables (including fixed arrays) are allocated in the portion of memory called **stack**. The amount of stack memory is generally quite small - e.g., Visual Studio defaults the stack size to 1MB. If you exceed it - stack overflow.
+    4. It can lead to artificial limitations or array overflows.
+- The memory for dynamic allocation is allocated from a much larger pool of memory managed by the OS called the **heap**. On modern machines, heap can be gigabytes in size.
+- To allocate a single variable dynamically, we use the scalar (non-array) form of the **new** operator: `new int; // dynamically allocate an int (and discard the result)`. We're requesting an integer's worth of memory from the OS. The new operator creates the object using that memory, and then returns a pointer containing the *address* of the memory that has been allocated.
+- Most ofter, we'll assign the return value to out own pointer variable so we can access the allocated memory later: `int *ptr{ new int }; *ptr = 7;`
+- Init a dynamically allocated var: `int *ptr1{ new int(5) }; int *ptr2{ new int{ 6 } };`
+- To delete a single dynamically alloced var, use the scalar (non-array) form of the **delete** operator: `delete ptr; // return the memory pointer to by ptr to the OS, so it could give it to some other application`, then `prt = 0; // set ptr to be a null pointer (nullptr instead of 0 from C++11)`
+- There are no guarantees about what will happen to the contents of deallocated memory. In most cases, the memory returned to the OS will contain some values it had before it was returned, and the pointer will be left pointing to the now deallocated memory. Such pointer is called a **dangling pointer**. Indirection through such pointer (or deleting it) will result in undefined behaviour.
+- Deallocating memory may create multiple dangling pointers. Best practises regarding this:
+    1. Try to avoid having multiple pointers point at the same piece of dynamic memory. If it's not possible, be clear about which pointer "owns" the memory (and is responsible for deleting it) and which are just accessing it.
+    2. When you delete a pointer, if that pointer is not going out of scope immediately afterward, set the pointer to 0 (or nullptr since C++11)
+- Operator *new* can fail rarely, when the OS doesn't have any memory to grant the request with. By default, if *new* fails, a bad_alloc exception is thrown. If this exception isn't properly handled, the program will terminate with an unhandled exception error.
+- There's the alternate form of *new* that can be used to tell new to return a null pointer if memory can't be allocated instead. This is done by adding the constant *std::nothrow* between the new keyword and the allocation type: `int *value = new (std::nothrow) int;`. The best practise is then to check all memory requests to ensure they actually succeeded before using the allocated memory (`if (!value) {...}`)
+- As null pointer means that "no memory has been allocated to this pointer", we can conditionally allocate memory: `if (!ptr) { ptr = new int; }`
+- **Memory leak** occurs when the program loses the address of some bit of dynamically allocated memory before giving it back to the OS (we can't *delete* it). E.g.:
+    - The pointer to the dynamically allocated memory goes out of scope before that memory is deallocated.
+    - The pointer is assigned the new variable address before the previous one was deallocated
+
+## Dynamically allocating arrays
+- To allocate an array dynamically, we use the array from of the new and delete (also called *new[]* and *delete[]*)
+- The length of dynamically allocated arrays has to be a type that's convertible to `std::size_t`
+- Allocate the array: `std::size_t length{}; std::cin >> length; int *array{ new int[length]{} };`
+- When deleting memory allocated for arrays, don't forget to use `delete[]`. The array `new[]` keeps track of how much memory was allocated to a variable, so that array `delete[]` can delete the proper amount
+- Dynamic array functions identically to a decayed fixed array, with the exception that the programmer is responsible for memory deallocation
+- Prior to C++11, you couldn't initialize a dynamic array to a non-zero value easily (initializer lists only worked for fixed arrays)
+- The author or learncpp tells that it's better to not resize dynamically alloced array yourself, and instead use `std::vector` (? is it always true ?)

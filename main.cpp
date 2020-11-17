@@ -1,24 +1,50 @@
 #include <iostream>
-#include <iterator>
+#include <string>
+#include <cstddef>
+#include <algorithm>
 
-// std::find is found in <algorithm> header
-int* find(int *first, int *last, int value)
+std::size_t askForNamesAmount()
 {
-    for (int *i{ first }; i < last; ++i)
+    std::cout << "How many nameZZZ: ";
+
+    std::size_t nameAmount{};
+    std::cin >> nameAmount;
+
+    return nameAmount;
+}
+
+void fillInNames(std::string *nameArray, std::size_t length)
+{
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // so that previous std::cin doesn't fuck us up
+
+    for (std::size_t counter = 0; counter < length; ++counter)
     {
-        if (*i == value)
-        {
-            return i;
-        }
+        std::cout << "Enter dis nahme #" << counter + 1 << " plssz: ";
+        std::getline(std::cin, nameArray[counter]);
     }
-    
-    return last;
+}
+
+void printNames(std::string *nameArray, std::size_t length)
+{
+    for (std::size_t counter = 0; counter < length; ++counter)
+    {
+        std::cout << "Sorted nahme #" << counter + 1 << ": " << nameArray[counter] << '\n';
+    }
 }
  
 int main()
 {
-    char c{ 'Q' };
-    std::cout << &c;
+    std::size_t nameAmount{ askForNamesAmount() };
+
+    auto *nameArray{ new std::string[nameAmount]{} };
+
+    fillInNames(nameArray, nameAmount);
+
+    std::sort(nameArray, nameArray + nameAmount);
+
+    printNames(nameArray, nameAmount);
+
+    delete[] nameArray;
  
     return 0;
 }
