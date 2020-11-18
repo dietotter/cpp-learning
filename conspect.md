@@ -517,6 +517,7 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
 - `#include <cstddef>` has a preprocessor macro `NULL`: `double *ptr{ NULL };` The value of *NULL* is implementation defined, but it is usually defined as the integer constant 0. Because it is implementation defined, we should avoid using it.
 - From C++11, NULL can be defined as `nullptr`. This should be favored instead of 0 or NULL.
 - C++11 also introduces a type called `std::nullptr_t` (from header `<cstddef>`). It can only hold 1 value - nullptr. Useful when we eant a function that only accepts a nullptr argument: `void doSomething(std::nullptr_t ptr) { ... }`
+- Deleting null pointer is fine (it won't do anything)
 
 ## Arrays and pointers
 - In all but 2 cases, when a fixed array is used in expression, it will **decay** (be implicitly converted) into a pointer that points to the first element of the array. `int array[3] { 5, 3, 4 };`. Then, `std::cout << &array[0]` and `std::cout << array` will both print the address of the first element in the array.

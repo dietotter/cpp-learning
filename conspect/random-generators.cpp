@@ -1,7 +1,7 @@
 #include <iostream>
+#include <ctime> // for std::time()
 #include <random> // for std::mt19937
 #include <cstdlib> // for std::rand() and std::srand()
-#include <ctime> // for std::time()
 
 namespace MyRandom {
     // Initialize our mersenne twister with a random seed based on the clock (once at startup)

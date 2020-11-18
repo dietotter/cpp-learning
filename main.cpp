@@ -1,45 +1,67 @@
+#include "quest1.h"
+#include "quest2.h"
+#include "quest6.h"
+#include "quest7.h"
+
 #include <iostream>
-#include <string>
-#include <cstddef>
-#include <algorithm>
 
-std::string askForName()
-{
-    std::string name{};
+namespace quest3 {
 
-    std::cout << "Enter dis nahme: ";
-    std::cin >> name;
+    void swap(int &x, int &y)
+    {
+        int temp{ x };
+        x = y;
+        y = temp;
+    }
 
-    return std::string{ name };
+    void executeQuest3()
+    {
+        int x{ 2 };
+        int y{ -3 };
+        swap(x, y);
+        std::cout << "x is " << x << ", y is " << y << '\n';
+    }
+
 }
 
-bool nameExists(const std::string_view (&nameArray)[4], std::string_view typedName)
-{
-    for (auto name : nameArray)
+namespace quest4 {
+
+    void printStringByChar(const char *str)
     {
-        if (name == typedName)
+        while (*str != '\0')
         {
-            return true;
+            std::cout << *str << ' ';
+            ++str;
         }
     }
 
-    return false;
+    void executeQuest4()
+    {
+        printStringByChar("Hello, bitches!");
+        std::cout << '\n';
+    }
+
 }
- 
+
 int main()
 {
-    constexpr std::string_view nameArray[]{ "Alex", "Huyalex", "Betty", "Huyetty" };
+    std::cout << "Question 1\n\n";
+    quest1::executeQuest1();
 
-    std::string_view typedName{ askForName() };
+    std::cout << "\n==============================\n\nQuestion 2\n\n";
+    quest2::executeQuest2();
 
-    if (nameExists(nameArray, typedName))
-    {
-        std::cout << typedName << " was found.";
-    }
-    else
-    {
-        std::cout << typedName << " was not found.";
-    }
- 
+    std::cout << "\n==============================\n\nQuestion 3\n\n";
+    quest3::executeQuest3();
+
+    std::cout << "\n==============================\n\nQuestion 4\n\n";
+    quest4::executeQuest4();
+
+    std::cout << "\n==============================\n\nQuestion 6\n\n";
+    quest6::card_deck_t deck{ quest6::getShuffledDeck() };
+
+    std::cout << "\n==============================\n\nQuestion 7\n\n";
+    quest7::playBlackjack(deck);
+
     return 0;
 }
