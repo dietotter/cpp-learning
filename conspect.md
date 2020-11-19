@@ -51,7 +51,7 @@ The line of code above is called a function prototype
 - Headers typically contain only function and variable declarations, not definitions (otherwise it would violate the One Definition Rule). Exception - symbolic constants
 - When including headers, use <> to include those that come with the compiler, and "" for other.
 - Best practise for include order: my own headers first, then 3rd party library, then standard library headers.
-- Header guards prevent multiple definitions to occur. They look like (add.h):
+- Header guards prevent multiple definitions to occur in single file. They look like (add.h):
 
 ``` #ifndef ADD_H ```
 
@@ -66,6 +66,7 @@ or
 ``` #pragma once  ```
 
 (not all compilers support the pragma version, though most modern compilers do)
+- Taking example above, *add.h* is included in *add.cpp* and *main.cpp*. When preprocessing *add.cpp*, `ADD_H` will be defined until the end of *add.cpp* (preventing *add.h* to be incuded into *add.cpp* the second time). Once *add.cpp* is finished, `ADD_H` is no longer defined, so when preprocessor runs on *main.cpp*, it will be defined again
 
 # Debugging
 - When printing debug information, use std::cerr instead of std::cout, because cerr (unlike cout) is unbuffered - it doesn't need to flush to print information, so prints it immediately.
@@ -767,3 +768,114 @@ Fortunately, that's just an alias for *std::size_t*, so we can use that instead:
 - Many standard algorithms can be parallelized to achieve faster processing
 - Most standard algorithms don't guarantee a particular order of execution. For such algos, ensure any functions you pass in do not assume a particular ordering. Some algorithms do guarantee sequential execution: `std::for_each`, `std::copy`, `std::copy_backward`, `std::move`, and `std::move_backward`
 - C++20 adds *ranges*, which allow us to simply pass *arr*, without having to pass *arr.begin()* and *arr.end()*
+
+# Functions (detailed)
+- **Function parameter** (or **formal parameter**) is a var declared in the function declaration
+- **Argument** (or **actual parameter**) is the value passed to the function
+- 3 ways of passing arguments:
+    1. **Pass by value** - the argument's value is copied into the value of the corresponding function parameter
+    - Advantages:
+        - Arguments can be just about anything
+        - Arguments are never changed by the function (prevents side effects)
+    - Disadvantages:
+        - Copying structs and classes can incur significant performance penalty
+    - When to use:
+        - When passing fundamental data types and enumerators, and the function doesn't need to change the arguments
+    - When not to use:
+        - When passing structs or classes
+    2. **Pass by reference** - we declare function parameters as references, and they become references to the arguments
+    - We can use this to imitate multiple return values. Parameters that are only used for returning values back to the caller - **out parameters**: `void getSinCos(double degrees, double &sinOut, double &cosOut) { ... }`
+    - However, out parameters should be avoided:
+        - We must pass in arguments to hold the updated outputs even if we don't use them
+        - The syntax is unnatural with both input and output params together
+        - It's not obvious from caller's side that some params are out params and will be changed (if we still want out params, it'd be more explicit (though we then need to do the check for nullptr value in function) to use pass by address for them). See `conspect/functions/out-params.cpp`
+        - The best recommendation is to avoid modifiable parameters altogether
+    - Non-const refs can only reference non-const l-values
+    - **Rule**: when passing argument by reference, always use a const reference unless you need to change the value of the argument
+    - Advantages:
+        - Refs allow the function to change the argument, if we need this. Otherwise, const refs can be used
+        - Pass by ref is fast, because no copy of the argument is made. **Rule**: use pass by const ref for structs and classes and other expensive-to-copy types (if they don't need to be modified)
+        - Refs can be used to return multiple values from functions (out params)
+        - Refs must be initialized, so no worry about null values
+    - Disadvantages:
+        - Arguments to non-const ref parameters can only be normal variables
+        - If using non-const ref, it's hard to tell whether parameter is an input, output or both
+        - It's impossible to tell from the function call whether the argument may change - arg passed by value and by ref looks the same
+    - When to use:
+        - When passing structs or classes (use const if read-only)
+        - When I need the function to modify the arg
+        - When function needs access to the type information of a fixed array
+    - When not to use:
+        - When passing fundamental types that don't need to be modified
+    3. **Pass by address** - passing the address of the argument variable rather than the arg var itself. Function param must be a pointer
+    - Typically used with built-in arrays (which decay into pointers)
+    - It is good idea to check if params passed by address are not null pointers before dereferencing them (so the program doesn't crash)
+    - To ensure function doesn't modify the argument passed in, we make the parameter to be a pointer to const var: `void printArray(const int *array, int length) { ... }`
+    - When you pass pointer to a function, the pointer's value (the address it points to) is copied to func's param. So it's passed by value (ofc, if we dereference it, we can still change the value at that address)
+    - We can pass address by reference: `void setToNull(int *&ptr) { ptr = nullptr; }`
+    - Because pass by address is actually a pass by value (the value happens to be an address), and references are implemented via pointers (they implicitly are dereferenced), we can say that *everything is actually a pass by value*
+    - Advantages:
+        - The same as refs (excluding the *must be initialized* one)
+    - Disadvantages:
+        - Because literals (excepting C-style strings) and expressions don't have addresses, pointer args can only be normal variables
+        - Values must be checked whether they are null
+        - Because dereferencing a ptr is slower than accessing a value directly, accessing args passed by address is slower than accessing args passed by value
+    - When to use:
+        - When passing built-in arrays (if decaying is fine)
+        - When passing a pointer and nullptr is a valid argument logically
+    - When not to use:
+        - When passing a pointer and nullptr is not a valid argument logically (use pass by ref)
+        - When passing structs or classes (use pass by ref)
+        - When passing fundamental types (use pass by value)
+    - **Rule**: prefer pass by ref to pass by address when applicable, because it's safer
+
+## Returning values
+- Returning values works similar to passing them, just the direction of data flow is reversed. Though we also need to consider the fact that local vars of a function go out of scope
+    1. **Return by value**
+    - When to use:
+        - When returning vars that were declared inside the func
+        - When returning function args passed by value
+    - When not to use:
+        - When returning a built-in array or poiner (use return by address)
+        - When returning a large struct or class (use return by ref)
+    2. **Return by address**
+    - Can return only the address, not literal or expression (they don't have addresses)
+    - Fast, because just copies an address from the function to the caller
+    - If you try to return the address of variable local to the function, it'll result in undefined behaviour: `int* doubleValue(int x) { int value{ x * 2}; return &value; }`. The caller will end up with the address of non-allocated memory (dangling pointer)
+    - Return by address was often used to return dynamically allocated memory to the caller: `int* allocateArray(int size) { return new int[size]; }`, though it's hard to track who's responsible for deleting the resource. Better to use smart pointers and types that clean up after themselves
+    - When to use:
+        - When returning dynamically allocated memory and you can't use a type that handles allocation for you
+        - When returning function arguments that were passed by address
+    - When not to use:
+        - When returning vars that were declared inside the function, or params passed by value (use return by value)
+        - When returning a large struct or class that was passed by ref (use return by ref)
+    3. **Return by reference**
+    - Can return only variable (should not return a ref to a literal or expression that resolves to a temporary value, those will go out of scope at the end of the function and the dangling reference will be returned)
+    - Fast, useful when returning structs and classes
+    - If you return local variable, it'll be destroyed at the end of the scope, and caller will receive garbage
+    - Simple example of when return by ref is useful (it'll be more useful when using classes): `conspect/functions/return-by-reference.cpp`
+    - When to use:
+        - When returning a reference parameter
+        - When returning a member of an object that was passed into the function by ref or address
+        - When returning a large struct or class that will not be destroyed at the end of the func (e.g. that was passed by ref)
+    - When not to use:
+        - When returning vars that were declared inside the func or params that were passed by value (use return by value)
+        - When returning a built-in array or pointer value (use return by address)
+- What happens if the caller mixes the value and reference types: see `conspect/functions/return-ref-type-mix.cpp` (also for returned ref lifetime nuances)
+- Methods to return multiple values:
+    1. Out params (not recommended)
+    2. Data-only structs:
+
+    `struct S{ int x; double y; }; S returnStruct(){ S s; s.x = 5; s.y = 6.9; }`
+
+    3. Use `std::tuple` (`#include <tuple>`) (from C++11). **Tuple** is a sequence of elems that may be different types, where the type of each elem must be explicitly specified
+
+    `std::tuple<int, double> returnTuple(){ return { 5, 6.9 }; }`
+
+    Then we can `std::get<n>(someTuple)` to get the nth element of the tuple
+
+    Can also use `std::tie` to unpack the tuple into predefined variables:
+
+    `int a; double b; std::tie(a, b) = returnTuple();`
+
+    From C++17: `auto [a, b]{ returnTuple() };`
