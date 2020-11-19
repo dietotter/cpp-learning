@@ -879,3 +879,66 @@ Fortunately, that's just an alias for *std::size_t*, so we can use that instead:
     `int a; double b; std::tie(a, b) = returnTuple();`
 
     From C++17: `auto [a, b]{ returnTuple() };`
+
+    Using struct is better option if using in multiple places. If just packaging up these values to return and there would be no reuse, it's cleaner to use tuple, since we don't introduce new user-defined data type
+
+## Inline functions
+- Code written in-place is significantly faster, because it doesn't have performace overhead of calling a function (CPU must store address of the current instruction (to know where to return) along with other registers, function params must be created and assigned values, program has to branch to new location)
+- For small, commonly used functions, the overhead is a lot more than the time to actually run their code
+- **inline** keyword requests the compiler to treat a function as inline function - when compiler compiler code, the function call is replaced with a copy of the contents of the function itself
+- The downside - compiled code becomes quite large
+- Inlining a function is best suited to short functions (no more than a few lines) that are typically called inside loops and do not branch. Also, *inline* keyword is just a recommendation - the compiler is free to ignore the request
+- Modern compilers are very good at inlining functions automatically
+- Inline functions are exempt (исключение) from the one-definition per program rule. But you still generally shouldn't define global functions in header files
+
+## Function overloading
+- **Overloaded functions** are functions with the same name, but different parameters (either different types of params or different amount)
+- Function return type isn't considered for uniqueness: `int getRandom(); double getRandom();` results in the mistake
+- Typedefs are not distinct: `typedef char* string; void print(string value); void print(char *value);` - two declarations are considered identical
+- When an overloaded function is called, C++ goes through this process:
+    1. Tries to find an exact match:
+    
+    `void print(int value); void print(char *value); print(0);`
+
+    0 could technically match char* (nullptr), but matches int exactly, so that func is called
+
+    2. C++ tries to find a match through *promotion* (see `Implicit type conversion` in this conspect)
+
+    `print('a');` (considering declarations above). There is no *print(char)*, so char 'a' is promoted to int
+
+    3. If no promotion is possible, tries through standard *conversion* (see `Implicit type conversion`)
+
+    `struct Employee; void print(float value); void print(Employee value); print('a');`
+
+    No exact match, no promotion match, so 'a' is converted to float and matched with print(float). All standard conversions are considered equal
+
+    4. Finally, C++ tries user-defined conversion. Classes can define conversions to other types that can be implicitly applied to objects of that class.
+
+    `class X; // with user-defined conversion to int`
+
+    `void print(float value); void print(int value); X value; print(value);`
+
+    Will resolve to print(int). User-defined conversions are all considered equal
+- Ambiguous matches occur when the parameters match equally good (as conversions - standard and user-defined are considered equal)
+
+`void print(unsigned int value); void print(float value);`
+
+`print('a'); print(0); print(3.14159);` Ambiguous matches, result in compile-time error.
+
+Three ways to resolve:
+1. Define a new overloaded function that takes parameters of exactly the type called
+2. Explicitly cast ambiguous argument: `print(static_cast<unsigned int>(x));`
+3. If argument is a literal, we can use literal suffix: `print(0u);` - matches unsigned int
+
+- For multiple arguments, the function with a better match for at least one parameter and no worse for the other parameters will be chosen
+
+## Default arguments
+- Function parameter with default value is called an **optional parameter**:
+
+`void printValues(int x, int y=10){ ... }`
+
+`int main(){ printValues(1); // y will use default argument 10`
+
+`printValues(3, 4); // y will use user-supplied argument 4 }`
+
+- The following is NOT allowed: `void printValue(int x=10, int y);`, as well as function call syntax `printValues(,,3);`

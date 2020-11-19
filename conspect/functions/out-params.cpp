@@ -7,3 +7,5 @@ int i {};
 foo1(i);  // can't modify i
 foo2(i);  // can modify i
 foo3(&i); // can modify i
+
+// The best recommendation is to avoid modifiable parameters altogether
