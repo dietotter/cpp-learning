@@ -942,3 +942,92 @@ Three ways to resolve:
 `printValues(3, 4); // y will use user-supplied argument 4 }`
 
 - The following is NOT allowed: `void printValue(int x=10, int y);`, as well as function call syntax `printValues(,,3);`
+
+- Default argument can only be declared once - either in function definition or a forward declaration - but not in both. Best practise - in forward declaration
+
+- Functions with default args can be overloaded: `void print(std::string string); void print(char ch=' ');`. *print()* would resolve to *print(' ')*
+
+- Optional params do NOT count towards the parameters that make function unique:
+
+`void printValues(int x); void printValues(int x, int y=20);` - this is not allowed
+
+# Function pointers
+- Functions have their own l-value function type - e.g. below function has a func type that returns an int and takes no params
+- Much like vars, funcs live at an assigned address in memory. When a func is called, execution jumps to the address of the function being called:
+
+`int foo(){ return 5 } // code for foo starts at memory address 0x002717f0`
+
+`int main() { foo(); // jump to address 0x002717f0`
+
+`return 0; }`
+
+- If we pass the identifier of func w/o calling it to cout, it may print it's address: `std::cout << foo;`. If my machine doesn't print the func's address, I may be able to force it by converting the func to a void pointer and printing that: `std::cout << reinterpret_cast<void*>(foo);`
+- Just like we can declare non-const pointer to a normal variable, it's possible to declare a non-const pointer to function:
+
+`int (*fcnPtr)();` - fcnPtr is a pointer to a function that takes no arguments and returns an integer. fcnPtr can point to any function that matches this type
+- To make a const function pointer, the const goes after the asterisk:
+
+`int (*const fcnPtr)();`. If const is put before the int, what would indicate the function being pointer to would return a const int
+- Function pointers can be initialized with a function (and non-const function pointers can be assigned a function). In the above *foo* example, we used foo directly, and it has been converted to a function pointer. Like with pointers to variables, we can also use `&foo` to get a function pointer to foo
+
+`int goo(){ return 6 }; int (*fcnPtr)(){ &foo }; fcnPtr = &goo;`
+- The type (parameters and return type) of func pointer must match the type of the func
+
+`int hoo(int x); double kek(); int (*fcnPtr2)(){ &kek };` - wrong, return type doesn't match. `fcnPtr2 = &hoo;` - wrong, parameters don't match
+- Unlike fundamental types, C++ *will* implicilty convert a func into a func pointer if needed (so operator& is not necessary). However, it won't implicilty convert func ptrs to void ptrs, or vice-versa.
+- Two ways to call a func via func ptr (function - `int foo(int x);`):
+    1. Explicit dereference: `int (*fcnPtr)(int){ &foo }; (*fcnPtr)(5);`
+    2. Implicit dereference: `fcnPtr(5);`. Some older compilers don't support this
+- Default params won't work for funcs called through function ptrs. That's because default params are resolved at compile-time, and func pointers are resolved at run-time.
+- Functions used as arguments to another function are sometimes called **callback functions**
+- For example, we want to add own comparator function to selection sort. Comparator funcs:
+
+`bool ascending(int x, int y) { return x > y; }`
+
+`bool descending(int x, int y) { return x < y; }`
+
+A pointer to such function would look like (3rd parameter):
+
+`void selectionSort(int *array, int size, bool (*compasionFcn)(int, int))`
+
+Inside selection sort, the comparison is now done like this:
+
+`if (comparisonFcn(array[bestIndex], array[currentIndex])) { bestIndex = currentIndex; }`
+
+And we use it like this:
+
+`selectionSort(array, 9, descending);`
+
+We can provide default function:
+
+`void selectionSort(int *array, int size, bool (*compasionFcn)(int, int) = ascending);`
+
+And call it:
+
+`selectionSort(array, 9);`
+- If a function parameter is of a function type, it will be converted to a pointer to the function type. That means, we can write the above sort function declaration as
+
+`void selectionSort(int *array, int size, bool compasionFcn(int, int));`
+- We can make type aliases for pointers to functions:
+
+`using CompareFunction = bool(*)(int, int);`
+
+`void selectionSort(int *array, int size, CompareFunction compasionFcn);`
+- We can use *std::function* from `#include <functional>`:
+
+`void selectionSort(int *array, int size, std::function<bool(int, int)> fcn);`
+
+If there are no parameters, parentheses can be left empty `()`. Another example:
+
+`int foo() { return 5; }`
+
+`std::function<int()> fcnPtr{ &foo }; fcnPtr = &goo; std::cout << fcnPtr();`
+
+For *std::function**, you can do the alias too.
+- We can infer the type of func pointer using *auto*, just like we infer the type of normal variables:
+
+`int goo(int x) { return x; }`
+
+`auto fcnPtr{ &goo }; std::cout << fcnPtr(6);`
+- Also function pointers are useful when you want to store functions in array or other structure
+- Recommendation is to use `std::function`. And in places where a func pointer type is used multiple times, make a type alias to your *std::function*
