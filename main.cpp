@@ -1,48 +1,62 @@
 #include "helper.h"
 
 #include <iostream>
-#include <vector>
+#include <string>
+#include <array>
+#include <algorithm>
+#include <string_view>
 
-void printBinary(unsigned int x)
+struct Student
 {
-    if (x > 1)
-    {
-        printBinary(x / 2);
-    }
+    std::string name;
+    int points;
+};
 
-    std::cout << x % 2;
-}
-
-int digitSum(int number)
+struct Season
 {
-    if (number <= 0)
-    {
-        return 0;
-    }
-
-    return digitSum(number / 10) + number % 10;
-}
-
-int factorial(int n)
-{
-    if (n <= 1)
-    {
-        return 1;
-    }
-
-    return factorial(n - 1) * n;
-    
-}
+    std::string_view name{};
+    double averageTemperature{};
+};
 
 int main()
 {
-    helper::runTestLoop(factorial, 7, 1);
+    std::array<Student, 6> students{ 
+        {
+            { "Kek", 80 },
+            { "Lol", 69 },
+            { "Asd", 91 },
+            { "Loh", 5 },
+            { "Chel", 75 },
+            { "Shestoy", 69 }
+        } 
+    };
 
-    std::cout << "93427 => " << digitSum(93427) << '\n';
+    Student *bestStudent{
+        std::max_element(students.begin(), students.end(),
+            [](const auto &currentBest, const auto &student) {
+                return currentBest.points < student.points;
+            })
+    };
 
-    std::cout << "-15 to binary: ";
-    printBinary(static_cast<unsigned int>(-15));
-    std::cout << '\n';
+    std::cout << bestStudent->name << " is the biggest zadrot\n";
     
+    std::array<Season, 4> seasons{
+        {
+            { "Spring", 285.0 },
+            { "Summer", 296.0 },
+            { "Fall", 288.0 },
+            { "Winter", 263.0 }
+        }
+    };
+
+    std::sort(seasons.begin(), seasons.end(), [](const auto &a, const auto &b) {
+        return a.averageTemperature < b.averageTemperature;
+    });
+
+    for (const auto& season : seasons)
+    {
+        std::cout << season.name << '\n';
+    }
+
     return 0;
 }

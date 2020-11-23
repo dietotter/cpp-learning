@@ -1117,3 +1117,84 @@ Methods to handle errors:
 - To turn off asserts in production code, we need to define `NDEBUG` macro (e.g., in Visual Studio, the following preprocessor definitions are set at the project level: WIN32;NDEBUG;_CONSOLE - so asserts are stripped out of release code by default)
 - **Note**: `exit()` and `assert()` functions terminate the app immediately, without a chance to cleanup (e.g. close a file or database), so be careful to not cause any corruptions
 - `static_assert` is a compile-time assert. Because it's evaluated at compile time, 1. we can place it anywhere in the code file; 2. conditional part must be evaluated at compile time too. Example: `static_assert(sizeof(int) == 4, "int must be 4 bytes");`. In C++11, the diagnostic message must be passed as 2nd parameter, since C++17 it is optional
+
+# Command line arguments
+- **Command line arguments** are optional string arguments that are passed by the operating system to the program when it is launched: `C:\>WordCount Myfile.txt Myotherfile.txt`
+- `int main(int argc, char *argv[])` is equal to `int main(int argc, char** argv)`
+    - **argc** contains a number of args passed to the program (`arg`ument `c`ount). Will always be at least 1, because the first argument is always the name of the program itself
+    - **argv** is where the actual arguments are stored (`arg`ument `v`alues, though the proper name is `arg`ument `v`ectors). It is an array of C-style strings
+- To deal with numeric args, they must first be converted. To see example: `conspect/src/numeric-program-arguments.cpp`
+- The OS parses command line args first. Typically, OSs have special rules about how special characters like double quotes and backslashes are treated. E.g.: `Hello world` are 2 arguments, but if we write `"Hello world"`, it will be treated as a single string argument. We could also escape double quotes `\"Hello world\"`, and now it's again counted as 2 arguments (`"Hello` and `world"`)
+
+# Ellipsis
+- We can pass variable number of parameters to a function using **ellipsis**: `return_type function_name(argument_list, ...)`. Ellipsis must always be the last parameter in the func. It captures additional arguments (if there are any).
+- To see implementation of `findAverage()` using ellipsis (and 3 methods to track parameters count): see `conspect/src/ellipsis.cpp`
+- Using ellipsis is discouraged, as it is dangerous:
+    - There is no type checking. The following is possible (will produce garbage result): `findAverage(6, 1.0, 2, "Hello, world!", 'G', &value, &findAverage);`
+    - Ellipsis don't know how many params were passed - we have to do the tracking ourselves:
+        1. Method 1: Pass a length parameter
+        2. Method 2: Use a sentinel value - **sentinel** is a special value that is used to terminate a loop when it is encountered
+        3. Method 3: Use a decoder string
+- Recommendations if still decided to use ellipsis:
+    - Do not mix expected argument types if possible
+    - Using a count parameter or decoder string is generally safer than using a sentinel. This ensures the ellipsis loop will terminate after a reasonable number of iternations even if it produces garbage value
+
+# Lambdas
+- **Lambda expression** (also **lambda** or **closure**) allows us to define anonymous function inside another function. Nesting is important, as it allows us both to avoid namespace pollution and to define the function as close to where it is used as possible (providing additional context)
+- Syntax:
+
+`[ captureClause ] ( parameters ) -> returnType`
+
+`{`
+
+&ensp;&ensp;&ensp;`statements;`
+
+`}`
+
+The *capture clause* and *parameters* can both be empty if they are not needed. The *return type* is optional, and if omitted, *auto* will be assumed (thus using type inference used to determine the return type). Though type inference for return types should be avoided, in this context, it's fine (because these functions are typically trivial)
+
+`[]() {}; // defines a lambda with no captures, no parameters, and no return type`
+- Prefer regular functions over lambdas for non-trivial and reusable cases
+
+## Lambdas type
+- The use of a lambda in `conspect/src/lambdas/rewrite-function-to-lambda.cpp` is correct. This use is sometimes called **function literal**
+- We can initialize a lambda variable with a lambda definition and use it later. Instead of:
+
+`return std::all_of(array.begin(), array.end(), [](int i){ return ((i % 2) == 0); });`
+
+We could do it much clearer:
+
+`auto isEven{`
+
+`[](int i)`
+
+`{`
+
+`return ((i % 2) == 0);`
+
+`}`
+
+`};`
+
+`return std::all_of(array.begin(), array.end(), isEven);`
+- Lambdas don't have a type that we can explicitly use. When we write a lambda, the compiler generates a unique type just for the lambda that is not exposed to us.
+- In actuality, lambdas aren’t functions (which is part of how they avoid the limitation of C++ not supporting nested functions). They’re a special kind of object called a *functor*. Functors are objects that contain an overloaded `operator()` that make them callable like a function.
+- There are several ways of storing lambda to use post-definition. See `conspect/src.lambdas/storing-lambda.cpp`
+- **Rule**: Use `auto` when initializing variables with lambdas, and `std::function` if you can’t initialize the variable with the lambda.
+
+## Generic lambdas
+- Lambda parameters work by the same rules as regular function parametes. Since C++14, we are allowed to use *auto* for parameters in lambdas (from C++20, in regular functions too). The compiler will infer the types from the calls. Because lambdas with one or more *auto* parameter can potentially work with a wide variety of types, they are called **generic lambdas**
+- When used in context of lambda, *auto* is just a shorthand for a template parameter
+- To see when we can and can't use generic lambdas: `conspect/src/lambdas/generic-lambda.cpp`
+
+### Generic lambdas and static variables
+- One thing to be aware of is that a unique lambda will be generated for each different type that auto resolves to. The example how one generic lambda turns into two distinct lambdas: see `conspect/src/lambdas/generic-lambda-static-variable.cpp`
+
+## Return type deduction and trailing return types
+- If we use return type inference, all return statements must return the same type (e.g. can't `return x / y;` in if-clause and `return static_cast<double>(x) / y;` in else-clause)
+- If we want to return different types, we can:
+    1. Do explicit casts to make all the return types match
+    2. Explicitly specify a return type for the lambda (trailing type), and let the compiler do implicit conversions
+
+## Standard library function objects
+- For common operations (e.g. addition, negation or comparison) we don't need own lambdas, as there are many basic callable objects defined in `<functional>` header. E.g.: `std::sort(arr.begin(), arr.end(), std::greater{});` using `std::greater`
