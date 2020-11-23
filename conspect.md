@@ -233,7 +233,7 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 
 ## Local variables
 - Local variables have **automatic storage duration**, which means they are created at the point of definition and are destroyed when the block ends. That's why they're sometimes called automatic variables.
-- Identifiers **linkage** determines whether other declarations of that name refer to the same object or nor. Local variables have no linkage, which means that each declaration refers to a unique object. E.g.: `conspect/local-variables.cpp`
+- Identifiers **linkage** determines whether other declarations of that name refer to the same object or nor. Local variables have no linkage, which means that each declaration refers to a unique object. E.g.: `conspect/src/local-variables.cpp`
 - Uninitialized by default (`int x;` - uninitialized; `int x{};` - zero-initialized; `int x{1};` - initialized with value)
 
 ## Global variables
@@ -305,7 +305,7 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 - Usage:
     1. Legibility for some return values (`int gradeTest()` vs `testScore_t gradeTest()`)
     2. Easier code maintenance (if we decide to change student id values to int from short, we can do it in one place: `using studentID_t = short;` => `using studentID_t = long;`)
-    3. Platform independent coding (that's how types with fixed sizes are defined - `int16_t` etc) - see `conspect/typedef-demo.cpp`
+    3. Platform independent coding (that's how types with fixed sizes are defined - `int16_t` etc) - see `conspect/src/typedef-demo.cpp`
     4. To make complex types simple (`using pairlist_t = std::vector<std::pair<std::string, int> >;`)
 
 ## Auto keyword
@@ -347,7 +347,7 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 
 ## Unnamed and inline namespaces
 - **Unnamed namespace** (`namespace { void doSomething(){} }`) is treated as if it is a part of the parent namespace. The other effect is that all the identifiers inside it are treated as if they had *internal linkage*. This is also currently the only way to keep *user-defined types* local to the file
-- **Inline namespace** is like unnamed, but doesn't give everything *internal linkage*. Used to give ways to use newer versions of functions without breaking the existing programs (see `conspect/inline-namespace.cpp`)
+- **Inline namespace** is like unnamed, but doesn't give everything *internal linkage*. Used to give ways to use newer versions of functions without breaking the existing programs (see `conspect/src/inline-namespace.cpp`)
 
 # Strings
 - `std::cin` doesn't work correctly with strings having whitespaces in it, as it will return characters it meets before the first whitespace encountered. The other characters are left inside cin buffer until the next extraction.
@@ -368,7 +368,7 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
 - **Aggregate data type** is a data type that groups multiple individual variables together
 - Struct declarations don't take up any memory, so can be defined in header and included where needed
 - The minima; size of a struct is the sum of all its members (but not always, as for optimization purposes the compiler might add some bytes of padding. Read more: https://en.wikipedia.org/wiki/Data_structure_alignment)
-- See `conspect/structs.cpp`. The structs declared there are sometimes called *plain old data structs* (POD structs) since the members are all data (variable) members
+- See `conspect/src/structs.cpp`. The structs declared there are sometimes called *plain old data structs* (POD structs) since the members are all data (variable) members
 
 # Control flow
 - **Execution path** (or *path*) - the sequence of statements that the CPU execures (from the top of main())
@@ -392,11 +392,11 @@ Its accessible in the entire if-statement (e.g. in `else{...}` too)
 
 ## Switch
 - The expression in `switch(...)` should evaluate to integral type
-- Switch variable declaration nuances: see `conspect/switch.cpp`
+- Switch variable declaration nuances: see `conspect/src/switch.cpp`
 
 ## Goto
 - *Goto statements* have **function scope** - they and the corresponding *statement labels* should appear in the same function
-- To see how goto statements and statement labels are used, see `conspect/goto.cpp`
+- To see how goto statements and statement labels are used, see `conspect/src/goto.cpp`
 - Gotos should be avoided
 
 ## While loops
@@ -415,7 +415,7 @@ Its accessible in the entire if-statement (e.g. in `else{...}` too)
 - It's better to use Mersenne Twister (`std::mt19937`) or some other algorithm from `#include <random>`, provided from C++11, or some 3rd party library
 - Using a non-const global variable to create a global random number generator (so that it's only seeded once) is one of the exceptions, when it's O.K. to use a non-const global variable. It should be created in a namespace.
 - To have a different seed each time we run a program, we could use the number of seconds passed since Jan 1, 1970 - `static_cast<unsigned int>(std::time(nullptr))` for `std::srand()`. *std::time* is from `#include <ctime>`.
-- See the usage of std::rand() and Mersenne Twister in `conspect/random-generators.cpp`
+- See the usage of std::rand() and Mersenne Twister in `conspect/src/random-generators.cpp`
 
 # std::cin, extraction and dealing with invalid text input
 - **Buffer** (*data buffer*) is a piece of memory set aside for storing data temporarily while it's moved from one place to another
@@ -454,7 +454,7 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
 - When declaring a fixed array, the length must be a compile-time constant (literal constant, symbolic constant etc). Non-const variables or runtime constants (`int temp{ 5 }; const int length{ temp };`) can't be used. This is because fixed array have memory allocated to them at compile-time.
 - `int array[5]{ 1, 2, 3 };` - other 2 values will zero-initialize. Also, it's always better to explicitly initialize arrays (`int array[5]{};`), even if they would be initialized later anyway.
 - We can omit length if we have initializer list: `int array[]{ 2, 3, 5, 7, 11 };` - will initialize array with length 5
-- To give indices a meaning, arrays can be set up with enums: see `conspect/arrays/array-enum.cpp`
+- To give indices a meaning, arrays can be set up with enums: see `conspect/src/arrays/array-enum.cpp`
 - Fixed arrays aren't copied, when passed to functions, the actual array is passed. To ensure that function does not modify the array, we can make the array const: `void passArray(const int prime[5]) { ... }`
 - `std::size(array)` from `#include <iterator>` is used to determine the length of the array. This function won't work for arrays passed to functions
 - `std::size()` can be used since C++17. Prior to that, the length of the array can be accessed by: `sizeof(array) / sizeof(array[0])` (this also doesn't work correctly for arrays passed to functions, as *sizeof* will return the size of pointer)
@@ -471,7 +471,7 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
 - It's fine if the array is larger than the string it contains (`char name[20]{ "Shrek" };`). std::cout will print "Shrek" and stop at null terminator, ignoring the rest.
 - The recommended way of reading C-style strings using *cin*: `char name[255]; std::cin.getline(name, std::size(name));` - this way, *getline()* will read up to 254 characters (leaving room for null terminator), and discard the excessing chars.
 - Functions to manipulate C-style strings are in `#include <cstring>`.
-- To copy a string to another string, see `conspect/arrays/copy-c-string.cpp`
+- To copy a string to another string, see `conspect/src/arrays/copy-c-string.cpp`
 - `std::strlen()` returns the length of the C-style string (without the null terminator) (whereas `std::size`, for example, would return the size of the array, when used on a C-style string)
 - Some other functions:
     - `strcat()` - append one string to another (dangerous)
@@ -481,7 +481,7 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
 - Unless I have a specific reason to use C-style strings, it's better to avoid them, and use `std::string` from `#include <string>`. If I need to work with fixed buffer sizes and C-style strings (e.g. for memory-limited devices), it'd be better to use a well-tested 3rd party library, or `std::string_view`
 
 ## std::string_view
-- Instead of C-style strings, use `std::string_view` (see `conspect/arrays/string-view.cpp`)
+- Instead of C-style strings, use `std::string_view` (see `conspect/src/arrays/string-view.cpp`)
 - Prefer *std::string_view* over *std::string* for read-only strings, unless you already have a *std::string*
 - *std::string_view* can work with non-null-terminated strings (it's safe)
 - When using string_view, we need to make sure that the underlying string does not go out of scope and isn't modified.
@@ -573,7 +573,7 @@ E.g.: `int x{}; std::cin >> x;` If user enters "5a", 5 will be extracted, conver
     - The most common - dynamically allocate an array of pointers: `int **array = new int*[10];` - allocate an array of 10 int pointers
     - Another common - to facilitate dynamically allocated multidimensional arrays. Two possible solutions:
         1. Works if all non-leftmost array dimensions are compile-time constants: `int (*array)[5] = new int[10][5];` (from C++11: `auto array = new int[10][5];`)
-        2. See `conspect/arrays/pointer-two-dimensional-array.cpp`
+        2. See `conspect/src/arrays/pointer-two-dimensional-array.cpp`
 - We can pass a pointer to a pointer to a function and use that pointer to change the value of the pointer it points to. However, it's better to use a reference to a pointer instead.
 - We can do `int ***ptrx3;` and so on (but why?)
 - It's recommended to avoid pointers to pointers unless there are no other options available
@@ -656,7 +656,7 @@ Because a pointer to a const value isn't const itself, it can be redirected to p
 - References to non-const vars can only be initialized with non-const l-values
 - Refs can't be reassigned: `int value1{ 5 }; int value2{ 6 }; int &ref{ value1 }; ref = value2;` - assigns 6 to value1 - doesn't change the reference
 - References, when used as function parameters, act as an alias for the argument, so no copy of the argument is made into the parameter. A function that uses a reference parameter is able to modify the argument passed in: `void changeN(int &ref){ ref = 6 };`. Now we can call `changeN(n);` and the variable n will be changed to 6 through the reference *ref*. The primary downside of this is that the argument must be a non-const l-value
-- C-style arrays do not decay when passed by reference: see `conspect/arrays/c-style-array-reference.cpp`
+- C-style arrays do not decay when passed by reference: see `conspect/src/arrays/c-style-array-reference.cpp`
 - References can also be used as shortcuts: `int &ref{ other.something.value1 };`
 
 ## References vs pointers
@@ -727,7 +727,7 @@ Because a pointer to a const value isn't const itself, it can be redirected to p
 `for (std::array<int, 3>::size_type i{ 0 }; i < myArray.size(); ++i) { std::cout << myArray[i] << ' '; }`
 
 Fortunately, that's just an alias for *std::size_t*, so we can use that instead: `std::array<int, 3>::size_type` <=> `std::size_t`. But it might be best to avoid manual indexing of std::array in the first place.
-- The working reverse for-loop for unsigned integers looks like this: see `conspect/arrays/unsigned-reverse-for-loop.cpp`
+- The working reverse for-loop for unsigned integers looks like this: see `conspect/src/arrays/unsigned-reverse-for-loop.cpp`
 - To initialize array of struct with brace initialization, there are some nuances, see [Array of struct](https://www.learncpp.com/cpp-tutorial/6-15-an-introduction-to-stdarray/)
 - Prefer using `std::array` over build-in fixed arrays
 
@@ -747,7 +747,7 @@ Fortunately, that's just an alias for *std::size_t*, so we can use that instead:
 - **Iterator** is an object designed to traverse through a container (e.g. values in array, chars in a string), providing access to each element along the way
 - Container may provide different kinds of iterators - e.g., array container might offer a forwards iterator, and reverse iterator (walks through array in reverse order)
 - C++ iterators typically use the same interface for traversal (`operator++` to move to the next element) and access (`operator*` to access the current element), we can iterate through a wide variety of different container types using a consistent method
-- Simplest kind of iterator - pointer iterator (using pointer arithmetics): see `conspect/iterators/pointer-iterator.cpp`
+- Simplest kind of iterator - pointer iterator (using pointer arithmetics): see `conspect/src/iterators/pointer-iterator.cpp`
 - All types that have `begin()` and `end()` member functions or can be used with `std::begin` and `std::end` are usable in range-based for-loops (for-each loops). Including user-defined types
 - If the elements being iterated over change address or are destroyed, the iterator becomes **invalidated** (*dangling*, like pointers and references can be)
 - Some operatuons that modify containers (such as adding elem to *std::vector*) can cause elems in the container to change addresses. When this happens, existing iterators will be invalidated. Good C++ reference documentation should note which container operations may or will invalidate iterators
@@ -758,13 +758,13 @@ Fortunately, that's just an alias for *std::size_t*, so we can use that instead:
     2. **Mutators** - used to modify data in container (e.g. sorting, shuffling)
     3. **Facilitators** - used to generate a result based on values of the data members (e.g. objects that multiply values, objects that determine what order pairs of elements should be sorted in)
 - Some examples:
-    - `std::find` searches for the first occurence of a value in a container. Takes in 3 params: iterator to the starting elem in the sequence, iterator to the ending elem in the sequence, value to search for. Returns an iterator pointing to the element (if it is found) or the end of container (if not found). See `conspect/standard-algorithms/find.cpp`
-    - `std::find_if` searches for value in container that matches some condition. Similar to *std::find*, but instead of passing a value to search for, we pass in a callable object, such as function pointer or a lambda, that checks to see if a match is found. See `conspect/standard-algorithms/find-if.cpp`
-    - `std::count` and `std::count_if` to search for all occurrences of an elem or an elem fulfilling a condition. See `conspect/standard-algorithms/count.cpp`
-    - `std::sort` to sort an array in ascending order, but also there is a *std::sort* version which takes a **comparison function** as 3rd param that allows us to sort by our own conditions. That function takes two params to compare and returns true if the first argument should be ordered before the second. See `conspect/standard-algorithms/sort.cpp`
+    - `std::find` searches for the first occurence of a value in a container. Takes in 3 params: iterator to the starting elem in the sequence, iterator to the ending elem in the sequence, value to search for. Returns an iterator pointing to the element (if it is found) or the end of container (if not found). See `conspect/src/standard-algorithms/find.cpp`
+    - `std::find_if` searches for value in container that matches some condition. Similar to *std::find*, but instead of passing a value to search for, we pass in a callable object, such as function pointer or a lambda, that checks to see if a match is found. See `conspect/src/standard-algorithms/find-if.cpp`
+    - `std::count` and `std::count_if` to search for all occurrences of an elem or an elem fulfilling a condition. See `conspect/src/standard-algorithms/count.cpp`
+    - `std::sort` to sort an array in ascending order, but also there is a *std::sort* version which takes a **comparison function** as 3rd param that allows us to sort by our own conditions. That function takes two params to compare and returns true if the first argument should be ordered before the second. See `conspect/src/standard-algorithms/sort.cpp`
         - Because sorting in descending order is popular, C++ provides a custom type `std::greater` (part of `<functional>` header) for that. So we can `std::sort(arr.begin(), arr.end(), std::greater{});` (before C++17, we'd have to specify the type `std::greater<int>{}`)
-        - See how `std::sort` uses the comparison function in `conspect/standard-algorithms/sort-with-comparison.cpp` using the example of selection sort
-    - `std::for_each` takes a list as input and applies a custom function to every element. See `conspect/standard-algorithms/for-each.cpp` (there's also why it might be better to use `std::for_each` rather than *range-based for-loops*)
+        - See how `std::sort` uses the comparison function in `conspect/src/standard-algorithms/sort-with-comparison.cpp` using the example of selection sort
+    - `std::for_each` takes a list as input and applies a custom function to every element. See `conspect/src/standard-algorithms/for-each.cpp` (there's also why it might be better to use `std::for_each` rather than *range-based for-loops*)
 - Many standard algorithms can be parallelized to achieve faster processing
 - Most standard algorithms don't guarantee a particular order of execution. For such algos, ensure any functions you pass in do not assume a particular ordering. Some algorithms do guarantee sequential execution: `std::for_each`, `std::copy`, `std::copy_backward`, `std::move`, and `std::move_backward`
 - C++20 adds *ranges*, which allow us to simply pass *arr*, without having to pass *arr.begin()* and *arr.end()*
@@ -788,7 +788,7 @@ Fortunately, that's just an alias for *std::size_t*, so we can use that instead:
     - However, out parameters should be avoided:
         - We must pass in arguments to hold the updated outputs even if we don't use them
         - The syntax is unnatural with both input and output params together
-        - It's not obvious from caller's side that some params are out params and will be changed (if we still want out params, it'd be more explicit (though we then need to do the check for nullptr value in function) to use pass by address for them). See `conspect/functions/out-params.cpp`
+        - It's not obvious from caller's side that some params are out params and will be changed (if we still want out params, it'd be more explicit (though we then need to do the check for nullptr value in function) to use pass by address for them). See `conspect/src/functions/out-params.cpp`
         - The best recommendation is to avoid modifiable parameters altogether
     - Non-const refs can only reference non-const l-values
     - **Rule**: when passing argument by reference, always use a const reference unless you need to change the value of the argument
@@ -853,7 +853,7 @@ Fortunately, that's just an alias for *std::size_t*, so we can use that instead:
     - Can return only variable (should not return a ref to a literal or expression that resolves to a temporary value, those will go out of scope at the end of the function and the dangling reference will be returned)
     - Fast, useful when returning structs and classes
     - If you return local variable, it'll be destroyed at the end of the scope, and caller will receive garbage
-    - Simple example of when return by ref is useful (it'll be more useful when using classes): `conspect/functions/return-by-reference.cpp`
+    - Simple example of when return by ref is useful (it'll be more useful when using classes): `conspect/src/functions/return-by-reference.cpp`
     - When to use:
         - When returning a reference parameter
         - When returning a member of an object that was passed into the function by ref or address
@@ -861,7 +861,7 @@ Fortunately, that's just an alias for *std::size_t*, so we can use that instead:
     - When not to use:
         - When returning vars that were declared inside the func or params that were passed by value (use return by value)
         - When returning a built-in array or pointer value (use return by address)
-- What happens if the caller mixes the value and reference types: see `conspect/functions/return-ref-type-mix.cpp` (also for returned ref lifetime nuances)
+- What happens if the caller mixes the value and reference types: see `conspect/src/functions/return-ref-type-mix.cpp` (also for returned ref lifetime nuances)
 - Methods to return multiple values:
     1. Out params (not recommended)
     2. Data-only structs:
@@ -1031,3 +1031,59 @@ For *std::function**, you can do the alias too.
 `auto fcnPtr{ &goo }; std::cout << fcnPtr(6);`
 - Also function pointers are useful when you want to store functions in array or other structure
 - Recommendation is to use `std::function`. And in places where a func pointer type is used multiple times, make a type alias to your *std::function*
+
+# Memory
+- Memory that program uses is typically divided into areas, called **segments**:
+    - **Code segment** (also *text segment*), where the compiled program sits in memory. Is typically read-only
+    - **Bss segment** (also *unitialized data segment*), where zero-initialized global and static variables are stored
+    - **Data segment** (also *initialized data segment*), where initialized global and static vars are stored
+    - **Heap** (also *free store*), where dynamically allocated vars are allocated from
+    - **Call stack** (also *stack*), where function params, local vars, and other function-related information are stored
+- Sequential memory requests (e.g., via *new*) may not result in sequential memory addresses being allocated
+- Advantages and disadvantages of heap:
+    - Allocing memory is comparatively slow
+    - Allocated memory stays alloced until specifically dealloces or the app ends (then OS should clean it up)
+    - Dynamically alloced memory must be accessed via pointer. Dereferencing pointer is slower than accessing a var directly
+    - Heap is a big pool of memory, so large arrays, structures, or classes can be alloced here
+- Call stack keeps track of all active funcs (those that were called but not terminated) from the start of the program to the current point of execution, and handles allocation of all function params and local vars
+- Call stack is implemented as **stack** data structure
+- **Data structure** is a programming mechanism for organizing data so that it can be used efficiently (e.g. array, struct). They provide mechanisms for storing and accessing data in an efficient way.
+- Array lets you access and modify elems in any order (called **random access**)
+- How call stack works, stack overflow, and adv/disadv of the stack: see `conspect/text/call-stack.md`
+
+## std::vector capacity and stack behaviour
+- In `std::vector`, **length** is how many elems are being used in the array; **capacity** is how many elems were alloced in memory.
+- `array.resize(n)` causes to change both length and capacity if resized to bigger, and only length (capacity stays the same) if resized downwards. It works similarly if you do it using initializer's lists (`vect = { 1, 2, 3 };`).
+- The range for `[]` and `at()` are based on vector's length, not capacity
+- Can be used as a stack using functions `push_back()`, `back()` (returns the value of the top elem), `pop_back()`. `push_back()` will resize vector.
+- Because resizing is expensive, we can tell vector to alloc a certain amount of capacity using `reserve()`:
+
+`std::vector<int> stack{}; stack.reserve(5);`
+- When vector is resized, it may allocate more capacity than is needed.
+
+# Recursion
+- **Recursive termination** is a condition that, when met, will cause the recursive function to stop calling itself
+- Inputs for which an algorithm trivially produces an output is called a **base case**. Base cases act as termination conditions for the algorithm. Base cases can often be identified by considering the output for an input of 0, 1, "", '', or null
+
+Example:
+
+`int sumTo(int sumto) {`
+
+`if (sumto <= 0) return 0; // base case (termination condition) when user passed in unexpected param (<=0)`
+
+`else if (sumto == 1) return 1; // normal base case (termination condition)`
+
+`else return sumTo(sumto - 1) + sumto; // recursive function call`
+
+`}`
+
+Note, that `sumto - ` is used instead of `--sumto`. That's because `operator--` has a side effect, and we use var `sumto` one more time in the whole expression
+
+- Fibonacci numbers is a typical function that uses recursive algorithm for its implementation
+- **Memoization** is a technique that caches the results of expensive function calls so thee result can be returned if the same input occurs again. Example with memoized fibonacci recursion: `conspect/src/fibonacci-recursion.cpp`
+- Recursion is good choice when most of these are true:
+    - Recursive code is much simpler to implement
+    - Recursion depth can be limited
+    - Iterative version of the algorithm requires managing a stack of data
+    - This isn't a performance-critical section of code
+- But almost always should favor iteration over recursion

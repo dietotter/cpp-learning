@@ -1,87 +1,48 @@
+#include "helper.h"
+
 #include <iostream>
-#include <limits>
-#include <functional>
+#include <vector>
 
-int askForNumber()
+void printBinary(unsigned int x)
 {
-    int usersNum{};
-    std::cout << "Enter an int: ";
-    std::cin >> usersNum;
-        
-    return usersNum;
-};
-
-char askForOperator()
-{
-    char usersOp{};
-
-    while (true)
+    if (x > 1)
     {
-        std::cout << "Enter operator (+, -, *, /): ";
-        std::cin >> usersOp;
-
-        switch (usersOp)
-        {
-            case '+':
-            case '-':
-            case '*':
-            case '/':
-                return usersOp;
-            default:
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cout << "Incorrect input.\n";
-                break;
-        }
+        printBinary(x / 2);
     }
+
+    std::cout << x % 2;
 }
 
-int add(int x, int y)
+int digitSum(int number)
 {
-    return x + y;
-}
-
-int subtract(int x, int y)
-{
-    return x - y;
-}
-
-int multiply(int x, int y)
-{
-    return x * y;
-}
-
-int divide(int x, int y)
-{
-    return x / y;
-}
-
-using ArithmeticFunction = std::function<int(int, int)>;
-
-ArithmeticFunction getArithmeticFunction(char op)
-{
-    switch (op)
+    if (number <= 0)
     {
-        default:
-        case '+':
-            return add;
-        case '-':
-            return subtract;
-        case '*':
-            return multiply;
-        case '/':
-            return divide;
+        return 0;
     }
+
+    return digitSum(number / 10) + number % 10;
+}
+
+int factorial(int n)
+{
+    if (n <= 1)
+    {
+        return 1;
+    }
+
+    return factorial(n - 1) * n;
+    
 }
 
 int main()
 {
-    int num1{ askForNumber() };
-    char op{ askForOperator() };
-    int num2{ askForNumber() };
+    helper::runTestLoop(factorial, 7, 1);
 
-    ArithmeticFunction arithmeticFunc{ getArithmeticFunction(op) };
+    std::cout << "93427 => " << digitSum(93427) << '\n';
 
-    std::cout << num1 << ' ' <<  op << ' ' << num2 << " = " << arithmeticFunc(num1, num2) << '\n';
+    std::cout << "-15 to binary: ";
+    printBinary(static_cast<unsigned int>(-15));
+    std::cout << '\n';
     
     return 0;
 }
