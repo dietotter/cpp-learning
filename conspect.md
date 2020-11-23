@@ -1087,3 +1087,33 @@ Note, that `sumto - ` is used instead of `--sumto`. That's because `operator--` 
     - Iterative version of the algorithm requires managing a stack of data
     - This isn't a performance-critical section of code
 - But almost always should favor iteration over recursion
+
+# Handling errors
+- **Semantic error** occurs when statement is syntactically valid, but doesn't do what it is intended to do. Some types:
+    - **Logic error**: `if(x >= 5) std::cout << "x is greater than 5";
+    - **Violated assumption** - the programmer assumes that something will be either true or false, and it isn’t
+- **Defensive programming** - form of program design that involves trying to identify areas where assumptions may be violated, and writing code that detects and handles any violation of those assumptions so that program reacts in a predictable way when those violations do occur. Almost all assumptions can be checked in:
+    1. When a function has been called, function arguments are incorrect or semantically meaningless
+    2. When function returns, return value may indicate that error occured
+    3. Program receives input (from user/file), it may not be in correct format
+
+Consequently, following rules should be used when programming defensively:
+1. At the top of each function, check to make sure any parameters have appropriate values
+2. After a function has returned, check the return value (if any), and any other error reporting mechanisms, to see if an error occurred
+3. Validate any user input to make sure it meets the expected formatting or range criteria
+
+Methods to handle errors:
+1. Skip the code if the assumption is wrong (bad, because user has no way to see if something went wrong): `void printString(const char *cstring) { if (cstring) std::cout << cstring; }`
+2. Return error code from function and let caller deal with it
+3. `#include <cstdlib>`, then `std::exit(2);` - terminate app and return error code 2 to OS
+4. Ask the user to enter input again
+5. `std::cerr` (like *cout*) - e.g., add the `else` clause to the first method to print the error message if `cstring` is null
+6. If working in graphical environment (e.g. MFC, SDL, QT, etc) - pop up a message box with an error code and then terminate the app
+
+## Assert
+- **Assert statement** is a preprocessor macro that evaluates a conditional expression at runtime. If the conditional expression is true, the assert statement does nothing. If the conditional expression evaluates to false, an error message is displayed and the program is terminated. This error message contains the conditional expression that failed, along with the name of the code file and the line number of the assert
+- From `<cassert>`
+- Trick to make asserts more descriptive: `assert(found && "Car could not be found in database");`
+- To turn off asserts in production code, we need to define `NDEBUG` macro (e.g., in Visual Studio, the following preprocessor definitions are set at the project level: WIN32;NDEBUG;_CONSOLE - so asserts are stripped out of release code by default)
+- **Note**: `exit()` and `assert()` functions terminate the app immediately, without a chance to cleanup (e.g. close a file or database), so be careful to not cause any corruptions
+- `static_assert` is a compile-time assert. Because it's evaluated at compile time, 1. we can place it anywhere in the code file; 2. conditional part must be evaluated at compile time too. Example: `static_assert(sizeof(int) == 4, "int must be 4 bytes");`. In C++11, the diagnostic message must be passed as 2nd parameter, since C++17 it is optional
