@@ -1198,3 +1198,40 @@ We could do it much clearer:
 
 ## Standard library function objects
 - For common operations (e.g. addition, negation or comparison) we don't need own lambdas, as there are many basic callable objects defined in `<functional>` header. E.g.: `std::sort(arr.begin(), arr.end(), std::greater{});` using `std::greater`
+
+## Lambda captures
+- Unlike nested blocks, where any identifier defined in outer block is accessible in the scope of nested block, lambdas can only access specific kinds of identifiers: global identifiers, entities that are known at compile time, entities with static storage duration
+- **Capture clause** is used to (indirectly) give a lambda access to variables available in surrounding scope that it normally would not have access to:
+
+`std::cin >> search;`
+
+`auto found{ std::find_if(arr.begin(), arr.end(), [search](std::string_view str) { return (str.find(search) != std::string_view::npos); }) };` - capture *search*
+- When a lambda definition is executed, for each var that lambda captures, clone of that var is made (with identical name) inside lambda. Cloned vars are initialized from the outer scope vars of the same name at this point. While cloned vars have the same name, they don't necessarily have the same type as original vars
+- When compiler encounteres lambda definition, it creates a custom object definition for the lambda. Each captured var becomes a data member of the object. At runtime, when lambda definition is encountered, lambda object is instantiated, and the members of the lambda are initialized.
+- Captures default to const value
+- To allow modifications of vars that were captured by value, we can mark the lambda as *mutable*. `mutable` keyword in this context removes the *const* qualification from all vairables captured by value (note: only the captured copy will be modified, not the variable defined outside of the lambda). See: `conspect/src/lambdas/mutable-lambda.cpp`
+
+### Capture by reference
+- We can also capture variables by reference to allow out lambda to affect the value of the original variable: `auto shoot{ [&ammo]() { --ammo; }};`. Unlike variables captured by value, variables that are captured by reference are non-const, unless the variable they're capturing is const.
+- Capture by ref should be preferred over capture by value just like for passing arguments to functions (e.g. for non-fundamental types)
+- We can capture multiple variables: `[health, armor, &enemies](){};`
+
+### Default captures
+- **Default capture** (or *capture-default*) captures all vars that are mentioned in the lambda. To capture all used vars by value, use a capture value of `=`. To capture all used vars by ref, use capture value of `&`. We can mix default captures with normal captures. We can capture some by value, some by ref, but each variable can only be captured once. See `conspect/src/lambdas/default-capture.cpp`
+
+### Defining new variables in lambda-capture
+- If we want to capture a var with slight modification or declare a new var that's only visible in scope of lambda, we can define a var in lambda-capture without specifying its type:
+
+`int width{}; int height{}; std::cin << width << height;`
+
+`auto found{ std::find_if(areas.begin(), areas.end(), [userArea{ width * height }](int knownArea) { return (userArea == knownArea); }) };`
+
+*userArea* type will be deduced to be int. *userArea* will only be calculated once lambda is defined. The calculated area is stored in the lambda object.
+- Best practise is to only initialize vars in the capture if their value is short and their type is obvious. Otherwise it's best to define the var outside of the lambda and capture it
+
+### Dangling captured variables
+- Variables are captured at the point where the lambda is defined. If a variable captured by reference dies before the lambda, lambda will be left holding a dangling reference.
+- See `conspect/src/lambdas/dangling-captured-variables.cpp`
+
+### Unintended copies of mutable lambdas
+- Because lambdas are object, they can be copied. This can cause problems in some cases. See `conspect/src/lambdas/unintended-lambda-copy.cpp` and `conspect/text/unintended-lambda-copy.md` for comment
