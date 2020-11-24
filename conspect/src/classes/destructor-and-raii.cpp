@@ -39,3 +39,17 @@ int main()
  
 	return 0;
 } // ar is destroyed here, so the ~IntArray() destructor function is called here
+
+// Note 1:
+// IntArray class is example of implementing RAII pattern (Resource Acquisition Is Initialization)
+
+// Note 2:
+// If compiling this example and getting the error:
+// error: 'class IntArray' has pointer data members [-Werror=effc++]|
+// error:   but does not override 'IntArray(const IntArray&)' [-Werror=effc++]|
+// error:   or 'operator=(const IntArray&)' [-Werror=effc++]|
+// 
+// Then I can either remove the “-Weffc++” flag from compile settings for this example,
+// or I can add the following two lines to the class:
+// IntArray(const IntArray&) = delete;
+// IntArray& operator=(const IntArray&) = delete;

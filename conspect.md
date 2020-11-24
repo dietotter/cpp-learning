@@ -1349,3 +1349,22 @@ Before C++11, we could only zero initialize it: `Something(): m_array {} { }`
 
 Now if we call default constructor (if it is provided by user or implicitly by compiler) - `Circle x{};`, - *x* initializes with the radius of `1.0`.
 - **Rule**: Favor use of non-static member initialization to give default values for your member variables.
+
+### Delegating constructors
+- Constructors are allowed to call other constructors. This process is called **delegating constructors** (or **constructor chaining**). To delegate a constructor, simply call the constructor in the member initializer list. See `conspect/src/classes/delegating-constructors.cpp`
+- Some notes:
+    - Constructor that delegates to another constructor is not allowed to do any member initialization itself. So your constructors can delegate or initialize, but not both.
+    - It’s possible for one constructor to delegate to another constructor, which delegates back to the first constructor. This forms an infinite loop.
+- **Best practise**: If you have multiple constructors that have the same functionality, use delegating constructors to avoid duplicate code.
+- Another way to deal with overlapping functionality is to move it to a separate function, and then call it in constructors which need this functionality. E.g. something like `void init() {}`
+- Be careful when using functions like `init()` with dynamically allocated memory
+- Btw: by the time the constructor starts executing statements in its body, members already exist and have been default initialized or are unitialized. Then we can only assign values to the members
+
+## Destructors
+- **Destructor** is another special kind of class member function that is executed when an object of that class is destroyed. Whereas constructors are designed to initialize a class, destructors are designed to help clean up. When an object goes out of scope normally, or a dynamically allocated object is explicitly deleted using the delete keyword, the class destructor is automatically called (if it exists)
+- If your class object is holding any resources (e.g. dynamic memory, or a file or database handle), or if you need to do any kind of maintenance before the object is destroyed, the destructor is the perfect place to do so
+- `~Circle() { ... }`
+- As destructor can't take arguments, only one destructor may exist per class
+- Destructors may safely call other member functions since the object isn’t destroyed until after the destructor executes
+- For class using destructor example, **RAII** (**Resource Acquisition Is Initialization**) example and `-Weffc++` "*class has pointer data members ... but does not override ...*" error, see `conspect/src/classes/destructor-and-raii.cpp`
+- If using `exit()` function, program will terminate and no destructors will be called
