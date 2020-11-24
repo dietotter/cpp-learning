@@ -1263,3 +1263,60 @@ From outside the class, we can access the type via `Calculator::number_t`
 
 `void copyFrom(const DateClass &d) { m_month = d.m_month; m_day = d.m_day; m_year = d.m_year; }`
 - Struct defaults its members to **public**
+
+## Encapsulation
+- **Encapsulation** (also called **information hiding**) is the process of keeping the details about how an object is implemented hidden away from users of the object. Instead, users of the object access the object through a public interface. In this way, users are able to use the object without having to understand how it is implemented. *Note*: The word encapsulation is also sometimes used to refer to the packaging of data and functions that work on that data together. We prefer to just call that object-oriented programming.
+    - *Benefit*: encapsulated classes are easier to use and reduce the complexity of your programs - we can use a class without having to know how it was implemented
+    - *Benefit*: encapsulated classes help protect your data and prevent misuse:
+
+`class MyString { char *m_string; int m_length; };` - *m_length* should always equal the length of the string held by *m_string* (this connection is called **invariant**). If they were public, anybody could chang ethe length of the string without changing m_string (or vice-versa). This would put the class into inconsistent state
+- (continuing)
+    - *Benefit*: encapsulated classes are easier to change
+    - *Benefit*: encapsulated classes are easier to debug: we can set breakpoints in **access functions** - a short public function whose job is to retrieve or change the value of private member variable. These are **getters** (or **accessors**) and **setters** (or **mutators**)
+        - **Best practise**: getters should return by value or const reference
+- For access functions, *whether to provide them*, we should consider the following:
+    - If nobody outside your class needs to access a member, don’t provide access functions for that member.
+    - If someone outside your class needs to access a member, think about whether you can expose a behavior or action instead (e.g. rather than a setAlive(bool) setter, implement a kill() function instead).
+    - If you can’t, consider whether you can provide only a getter.
+
+## Constructors
+- When all members of a class (or struct) are public, we can use **aggregate initialization** to initialize the class (or struct) directly using an initialization list or uniform initialization:
+
+`class Foo { public: int m_x; int m_y; };`
+
+`Foo foo1 = { 4, 5 }; // initialization list`
+
+`Foo foo2 { 6, 7 }; // uniform initialization`
+- A constructor that takes no parameters (or has parameters that all have default values) is called a **default constructor**: `Foo() { m_x = 0; m_y = 1; }`
+
+then `int main(){ Foo foo; return 0; }`
+
+Because we’re instantiating an object of type Foo with no arguments, the default constructor will be called immediately after memory is allocated for the object, and our object will be initialized. Without a default constructor, m_x and m_y would have garbage values (fundamental variables aren't initialized by default)
+- Favor brace initialization to initialize class objects: `Foo(int x, int y=1) { m_x = x; m_y = y; }`
+
+`Foo oneFoo{ 1, 2 }; Foo twoFoo{ 5 };`
+
+over direct initialization:
+
+`Foo threeFoo(3, 4);`
+
+- It's also possible to initialize using copy initialization (relevant before C++11):
+
+`Foo six = Foo{ 6 }; // will call Foo(6, 1)`
+
+`Foo seven = 7; // also copy initialize, will invoke Foo(7, 1)`
+
+but we should avoid it, because copy-initialization does not work the same with classes as uniform or direct initializations
+- We could reduce the number of constructors, for example, by doing this: `Foo(int x=0, int y=1) { ... }`
+
+then we can: `Foo zero; Foo one{}; Foo two{ 2 }; Foo three{ 3, 5 };`
+- For implicit constructors, see `conspect/text/classes/implicit-constructor.md`
+- We can explicitly tell the compiler to create a default constructor, even if there are other user-provided constructors: `Foo() = default;`. It's almost the same as adding a default constructor with empty body, the difference is that *= default* allows us to safely initialize member variables even if they don't have an initializer: see `conspect/src/classes/default-constructor.cpp`. **Rule**: If you have constructors in your class and need a default constructor that does nothing, use *= default*.
+- Classes may contain other classes as member variables. If a `class B` has a private member of `class A` - `A m_a;`, and we have `int main() { B b; return 0; }`. When variable `b` is constructed, the `B()` constructor is called. Before the body of the constructor executes, `m_a` is initialized, calling the `class A` default constructor. Then control returns back to the `B` constructor, and the body of the `B` constructor executes.
+- `class`-type members get initialized even if we don’t explicitly initialize them.
+- Constructor does not create an object - the compiler sets up the memory allocation for the object prior to the constructor call.
+- Constructor is for:
+    - Determining who is allowed to create an object (an object of class can only be created if a matching constructor is found)
+    - Can be used to initialize objects
+- **Best practise** - initialize all member variables, whether via constructor, or via other means
+- Constructors are only intended to be used for initialization when the object is created. You should not try to call a constructor to re-initialize an existing object. While it may compile, the results will not be what you intended (instead, the compiler will create a temporary object and then discard it).
