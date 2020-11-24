@@ -1256,3 +1256,10 @@ From outside the class, we can access the type via `Calculator::number_t`
 - Nested types cannot be forward declared, and generally should only be used when the nested type is used exclusively within that class.
 - Since classes are types, it's possible to nest classes inside other classes
 - Structs have the ability to have member functions too, but we shouldn't do it. **Rule**: Use the `struct` keyword for data-only structures. Use the `class` keyword for objects that have both data and functions.
+- Members are **private** by default
+- **Access specifiers**: `private`, `protected`, `public`
+- The group of public members of a class are often referred to as **public interface** - it defines how programs using the class will interact with it.
+- Access control works on a **per-class** basis, not a **per-object** basis. This means that when a function has access to the private members of a class, it can access the private members of *any* object of that class type. E.g. (`copyFrom` is public member function of *DateClass*; `m_month` and other are private members):
+
+`void copyFrom(const DateClass &d) { m_month = d.m_month; m_day = d.m_day; m_year = d.m_year; }`
+- Struct defaults its members to **public**
