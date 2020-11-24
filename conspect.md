@@ -1341,3 +1341,11 @@ Before C++11, we could only zero initialize it: `Something(): m_array {} { }`
 - Recommendations:
     1. Don’t initialize member variables in such a way that they are dependent upon other member variables being initialized first
     2. Initialize variables in the initializer list in the same order in which they are declared in your class
+
+### Non-static member initialization
+- Since C++11, it's possible to give normal (without `static` keyword) class member variables a default initialization value directly:
+
+`class Circle { private: double m_radius{ 1.0 }; };`
+
+Now if we call default constructor (if it is provided by user or implicitly by compiler) - `Circle x{};`, - *x* initializes with the radius of `1.0`.
+- **Rule**: Favor use of non-static member initialization to give default values for your member variables.

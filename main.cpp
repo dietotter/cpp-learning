@@ -1,37 +1,43 @@
+#include <string>
 #include <iostream>
-#include <cstdint>
-
-class RGBA
+ 
+class Ball
 {
 private:
-    std::uint_fast8_t m_red{};
-    std::uint_fast8_t m_green{};
-    std::uint_fast8_t m_blue{};
-    std::uint_fast8_t m_alpha{};
-
+	std::string m_color{ "black" };
+	double m_radius{ 10.0 };
+ 
 public:
-    RGBA(std::uint_fast8_t red = 0,
-        std::uint_fast8_t green = 0,
-        std::uint_fast8_t blue = 0,
-        std::uint_fast8_t alpha = 255)
-        : m_red{ red }, m_green{ green }, m_blue{ blue }, m_alpha{ alpha }
-    {
-    }
-
-    void print()
-    {
-        std::cout << "r=" << static_cast<int>(m_red)
-            << " g=" << static_cast<int>(m_green)
-            << " b=" << static_cast<int>(m_blue)
-            << " a=" << static_cast<int>(m_alpha) << '\n';
-    }
+	// Constructor with only radius parameter (color will use default value)
+	Ball(double radius): m_radius{ radius }
+	{
+	}
+ 
+	// Constructor with both color and radius parameters
+	Ball(const std::string &color = "black", double radius = 10.0)
+        : m_color{ color }, m_radius{ radius }
+	{
+	}
+ 
+	void print()
+	{
+		std::cout << "color: " << m_color << ", radius: " << m_radius << '\n';
+	}
 };
-
-
+ 
 int main()
 {
-    RGBA teal{ 0, 127, 127 };
-	teal.print();
-
-    return 0;
+	Ball def;
+	def.print();
+ 
+	Ball blue{ "blue" };
+	blue.print();
+	
+	Ball twenty{ 20.0 };
+	twenty.print();
+	
+	Ball blueTwenty{ "blue", 20.0 };
+	blueTwenty.print();
+ 
+	return 0;
 }
