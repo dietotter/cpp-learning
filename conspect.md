@@ -1320,3 +1320,24 @@ then we can: `Foo zero; Foo one{}; Foo two{ 2 }; Foo three{ 3, 5 };`
     - Can be used to initialize objects
 - **Best practise** - initialize all member variables, whether via constructor, or via other means
 - Constructors are only intended to be used for initialization when the object is created. You should not try to call a constructor to re-initialize an existing object. While it may compile, the results will not be what you intended (instead, the compiler will create a temporary object and then discard it).
+
+### Member initializer lists
+- The version with assignment in constructor might be less efficient than using members initialization (and doesn't work with references or const variables). So to initialize member variables, we use **member initializer lists**:
+
+`Something(int value1, double value2, char value3 = 'c')`
+
+`: m_value1{ value1 }, m_value2 { value2 }, m_value3 { value3 }`
+
+`{ /* no need for assignment here */ }`
+- If we have array member: `const int m_array[5];`, since C++11 we can initialize it using uniform initialization: `Something(): m_array{ 1, 2, 3, 4, 5 } { }`
+
+Before C++11, we could only zero initialize it: `Something(): m_array {} { }`
+- We can also initialize members that are classes: `class B` has member `A m_a;`. `class A` has constructor `A(int x) { ... }`. Class B constructor: `B(int y): m_a{ y - 1 } { ... }` - call *A(int)* constructor to initialize member *m_a*
+- Formatting recommendations:
+    - If initializer list fits on the same line as function name, put everything in one line
+    - If init list doesn't fit on the same line as function name, then it should go indented on the next line
+    - If all of the initializers don't fit on a single line (or the initializers are non-trivial), then we can space them out, one per line
+- Variables in the initializer list are initialized in the order in which they are declared in class
+- Recommendations:
+    1. Don’t initialize member variables in such a way that they are dependent upon other member variables being initialized first
+    2. Initialize variables in the initializer list in the same order in which they are declared in your class
