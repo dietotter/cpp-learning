@@ -1235,3 +1235,24 @@ We could do it much clearer:
 
 ### Unintended copies of mutable lambdas
 - Because lambdas are object, they can be copied. This can cause problems in some cases. See `conspect/src/lambdas/unintended-lambda-copy.cpp` and `conspect/text/unintended-lambda-copy.md` for comment
+
+# Classes
+- Functions defined inside of a class - **member functions** (or **methods**). They can be defined inside or outside of the class definition
+- **The implicit object** - the associated object that is implicitly passed to a member function (`today.print()` - *today*)
+- With member functions, you can call a function that's defined below it without a forward declaration
+- Classes can have **member types** or **nested types** (including type aliases):
+
+`class Calculator {`
+
+`public:`
+
+`using number_t = int; // nested type alias`
+
+`...`
+
+`};`
+
+From outside the class, we can access the type via `Calculator::number_t`
+- Nested types cannot be forward declared, and generally should only be used when the nested type is used exclusively within that class.
+- Since classes are types, it's possible to nest classes inside other classes
+- Structs have the ability to have member functions too, but we shouldn't do it. **Rule**: Use the `struct` keyword for data-only structures. Use the `class` keyword for objects that have both data and functions.
