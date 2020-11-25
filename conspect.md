@@ -1380,3 +1380,56 @@ Consequently, member function `void setID(int id) { m_id = id; }` is converted i
 - **this pointer** is a hidden const pointer that holds the address of the object the member function was called on
 - The recommendation is to use the *m_* prefix rather than *this->* on member variables for solving the duplicate name problem (`m_x = x;` rather than `this->x = x;`)
 - We may need to return `*this` from function when we want to enable chaining member functions. See `conspect/src/classes/chaining-member-functions.cpp`
+
+## Class code and header files
+- Types (which include classes) are exempt from the part of the one-definition rule that says you can only have one definition per program, so there isn't an issue #including class definitions into multiple code files
+- Member functions defined inside class definition are considered implicitly inline, so there is no problem defining trivial member functions (such as access functions) inside the class definition itself
+- Member functions defined outside the class definition are treated like normal functions, so those functions should be defined in a code file. The one exception for this is for template functions
+- Recommendations:
+    - For classes used in only one file that aren’t generally reusable, define them directly in the single .cpp file they’re used in
+    - For classes used in multiple files, or intended for general reuse, define them in a .h file that has the same name as the class
+    - Trivial member functions (trivial constructors or destructors, access functions, etc…) can be defined inside the class
+    - Non-trivial member functions should be defined in a .cpp file that has the same name as the class
+- Default parameters for member functions should be declared in the class definition (in the header file), where they can be seen by whomever #includes the header
+- Outside of some open source software (where both .h and .cpp files are provided), most 3rd party libraries provide only header files, along with a precompiled library file. There are several reasons for this:
+    1. It’s faster to link a precompiled library than to recompile it every time you need it
+    2. A single copy of a precompiled library can be shared by many applications, whereas compiled code gets compiled into every executable that uses it (inflating file sizes)
+    3. Intellectual property reasons (you don’t want people stealing your code)
+
+## Const classes
+- Classes can also be made const by using const keyword. Initialization is done via class constructors. After that, the members can't be changed, even with member functions
+- Const class objects can only explicitly call *const** member functions
+- **const member function** is a member function that guarantees it will not modify the object or call any non-const member functions (as they may modify the object)
+- To make a member function const: `int getValue() const { return m_value; }` For member functions defined outside the class definition, we need to use `const` keyword both on function prototype in class definition and function definition:
+
+`int getValue() const;` (inside `class Something`)
+
+`int Something::getValue() const { return m_value; }`
+- Constructor can't be const as they need to be able to initialize member vars
+- **Rule**: Make any member function that does not modify the state of the class object *const*, so that it can be called by const objects
+- A more common way to use const class objects is by passing an object to a function by const reference `void printDate(const Date &date) { ... }`
+- It's possible to overload a function to have a const and non-const version:
+
+`const std::string& getValue() const { return m_value; }`
+
+`std::string& getValue() { return m_value; }`
+
+The first one will be called on any const objects, the second one - on non-const objects. Such overloading is typically done when the return value needs to differ in constness - the non-const version of getValue() is more flexible because we can use it to both read and write m_value.
+
+## Static member variables and functions
+- Static member variables are shared by all objects of the class: `static int s_value;`. They can be accessed directly using the class name (this is the preferred method for accessing static members): `Something::s_value = 2;`
+- When we declare a static member var inside a class, we're telling the compiler about its existence, but not actually defining it (much like forward declaration). Because static member vars are not part of the individual class objects (they are treated similarly to global vars and are initialized when the program starts), we must explicitly define the static member outside of the class, in the global scope: `int Something::s_value{ 1 };`. This line serves 2 purposes - instantiates the static member var (just like global var), and optionally initializes it (if no initializer is provided, C++ will init it to 0)
+- The above static member definition can be done even if the member is declared as private or protected
+- If the class is defined in a .h file, define static member in the associated .cpp file. If class is defined in .cpp, define it directly underneath the class. Few shortcuts:
+    1. When the static member is a const integral type (which includes char and bool) or a const enum, the static member can be initialized inside the class definition: `static const int s_value{ 4 };`
+    2. Static constexpr members can be initialized inside the class definition:
+
+    `static constexpr std::array<int, 3> s_array{ 1, 2, 3 }; // this even works for classes that support constexpr initialization`
+- Static member vars can be useful when implementing unique id system, or internal lookup table
+- For private static members we can write static access functions
+- Static member functions have no `*this` pointer
+- Static member functions can directly access other static members, but not non-static members
+- **pure static classes** (or **monostates**) - classes with all static members. Although they can be useful, some warnings:
+    - There is no way to have multiple copies of a pure static class (e.g. if I needed 2 independent IDGenerator objects, this would not be possible with a single pure static class)
+    - The problems of global vars (such as that any piece of code can change the value of the global variable) hold the same for pure static classes
+- C++ does not have static constructors. If initializing static member vars requires executing code (e.g. a loop) there are many different ways of doing that. E.g., one way that works with all vars, static or not, is to use a lambda and call it immediately: `std::vector<char> MyClass::s_mychars{ []{ ... }() };`
