@@ -1465,3 +1465,19 @@ A copy of the anon object is then returned to the caller by value, and the anon 
 
 This also works with function params: `printValue(5 + 3);`
 - It's also possible with classes: (consider *class Cents*) `Cents{ 7 }`. Full example of this: see `conspect/src/classes/anonymous-objects.cpp`
+- In C++, anonymous objects are primarily used to pass or return values without having to create lots of temporary variables. Memory allocated dynamically is also done so anonymously (which is why its address must be assigned to a pointer)
+- Anonymous objects are treated as *rvalues*
+- **Note**: Some compilers, such as Visual Studio, will let you set non-const references to anonymous objects. This is non-standard behaviour
+
+## Nested types in classes
+- We can define (nest) other types in classes under the appropriate access specifier
+- If we move `enum FruitType { APPLE, BANANA, CHERRY };` inside `class Fruit`, we can now refer to enum values from outside the class as `Fruit::APPLE` (considering its under the `public` access specifier)
+- Classes essentially act as a namespace for any nested types. Note that because *enum classes* also act like namespaces, if we'd nested *FruitType* inside *Fruit* as `enum class` instead of `enum`, we'd access the APPLE enumerator via `Fruit::FruitType::APPLE`
+- Typedefs, type aliases and other classes can also be nested into classes. Nested classes have the same access to members of the enclosing class that the enclosing class does. Though the nested class does not have nay special access to the `this` pointer of the enclosing class.
+- Nested types can't be forward declared (though this may change in future C++)
+- The example of nested class: an iterator class
+
+## Timing my code (using timer)
+- From C++11, we can use `<chrono>` library. Though as using it is a bit *arcane* (as learncpp author called it), we can encapsulate chrono's timing functionality we need into a class. See `conspect/src/timer.cpp` (there's also how to use it)
+- Make sure to use release build when timing, not debug
+- Results of timing can be significantly impacted by a lot of things (e.g. system doing cpu/memory/hard drive intensive stuff)
