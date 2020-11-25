@@ -1455,3 +1455,13 @@ And use it in *main()*: `display.displayItem(storage);`
 - Instead of making an entire class a friend, we can make a single member function a friend. This is a little trickier, because in order to make a member function a friend, the compiler has to have seen the full definition for the class of the friend member function (not just a forward declaration). How its made when everything is defined in a single file: see `conspect/src/classes/friend-member-function.cpp`
 - **Usage**: Friending is uncommonly used when two or more classes need to work together in an intimate way, or much more commonly, when defining overloading operators
 - **Best practise**: Limit the use of friend functions and classes to a minimum, because their usage violates encapsulation.
+
+## Anonymous objects
+- **Anonymous object** is essentially a value that has no name. Because they have no name, there's no way to refer to them beyond the point where they are created. Consequently, they have *expression scope*. E.g.:
+
+`return x + y; // an anonymous object is created to hold and return the result of x + y`
+
+A copy of the anon object is then returned to the caller by value, and the anon object is destroyed.
+
+This also works with function params: `printValue(5 + 3);`
+- It's also possible with classes: (consider *class Cents*) `Cents{ 7 }`. Full example of this: see `conspect/src/classes/anonymous-objects.cpp`
