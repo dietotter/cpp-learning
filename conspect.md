@@ -1433,3 +1433,25 @@ The first one will be called on any const objects, the second one - on non-const
     - There is no way to have multiple copies of a pure static class (e.g. if I needed 2 independent IDGenerator objects, this would not be possible with a single pure static class)
     - The problems of global vars (such as that any piece of code can change the value of the global variable) hold the same for pure static classes
 - C++ does not have static constructors. If initializing static member vars requires executing code (e.g. a loop) there are many different ways of doing that. E.g., one way that works with all vars, static or not, is to use a lambda and call it immediately: `std::vector<char> MyClass::s_mychars{ []{ ... }() };`
+- There is one way to init static members kinda like a constructor. See `conspect/src/classes/interesting-static-member-init.cpp`. Though probably I'll never need it
+
+## Friend functions and classes
+- **Friend function** is a function that can access the private members of a class as though it were a member of that class. Friend function may be either a normal function, or a member function of another class. To declare it - simply use the `friend` keyword in front of the prototype of the func I wish to be a friend of the class (e.g., in `class Accumulator`):
+
+`friend void reset(Accumulator &accumulator);`. It doesn't matter where to declare it - in the private or public section of the class. Then, outside the class:
+
+`void reset(Accumulator &accumulator) { accumulator.m_value = 0; }` - considering that `m_value` is private member, *reset* (while not being a member function) has access to it, because it is a friend function. We have to pass an Accumulator object to it, because it doesn't have a `*this` pointer.
+- Another example - `class Value` with private `int m_value;`. Friend function: `friend bool isEqual(const Value &value1, const Value &value2);` It will have access to the private members of all Value objects, so it can do the comparison on two objects.
+- A function can be a friend of more than one class at the same time. Consider two classes: `Temperature` and `Humidity` and a function, that is a friend of both of them:
+
+`friend void printWeather(const Temperature &temperature, const Humidity &humidity);`, which prints the temperature and humidity by accessing the private members of both classes.
+
+**Note**: If these are all defined in the same class, and, for example, `Temperature` is defined first, we need to put a class prototype of Humidity above the definition of Temperature class: `class Humidity;`
+- It is possible to make an entire class a friend of another class. This gives all the members of the friend class access to the private members of the other class. Inside *class Storage*: `friend class Display;`. Then, inside *class Display*:
+
+`void displayItem(const Storage &storage) { std::cout << storage.m_value; }`
+
+And use it in *main()*: `display.displayItem(storage);`
+- Instead of making an entire class a friend, we can make a single member function a friend. This is a little trickier, because in order to make a member function a friend, the compiler has to have seen the full definition for the class of the friend member function (not just a forward declaration). How its made when everything is defined in a single file: see `conspect/src/classes/friend-member-function.cpp`
+- **Usage**: Friending is uncommonly used when two or more classes need to work together in an intimate way, or much more commonly, when defining overloading operators
+- **Best practise**: Limit the use of friend functions and classes to a minimum, because their usage violates encapsulation.
