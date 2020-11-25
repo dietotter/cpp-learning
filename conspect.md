@@ -1368,3 +1368,15 @@ Now if we call default constructor (if it is provided by user or implicitly by c
 - Destructors may safely call other member functions since the object isn’t destroyed until after the destructor executes
 - For class using destructor example, **RAII** (**Resource Acquisition Is Initialization**) example and `-Weffc++` "*class has pointer data members ... but does not override ...*" error, see `conspect/src/classes/destructor-and-raii.cpp`
 - If using `exit()` function, program will terminate and no destructors will be called
+
+## Hidden *this* pointer
+- `simple.setID(2);`. Although the call to function setID() looks like it only has one argument, it actually has two. When compiled, the compiler converts it into:
+
+`setID(&simple, 2);`
+
+Consequently, member function `void setID(int id) { m_id = id; }` is converted into:
+
+`void setID(Simple* const this, int id) { this->m_id = id; }`
+- **this pointer** is a hidden const pointer that holds the address of the object the member function was called on
+- The recommendation is to use the *m_* prefix rather than *this->* on member variables for solving the duplicate name problem (`m_x = x;` rather than `this->x = x;`)
+- We may need to return `*this` from function when we want to enable chaining member functions. See `conspect/src/classes/chaining-member-functions.cpp`
