@@ -1,12 +1,17 @@
 #include "Point2d.h"
 #include "Monster.h"
 #include "MonsterGenerator.h"
+#include "Card.h"
+#include "Deck.h"
+#include "Player.h"
 
 #include <iostream>
 // for srand() for MonsterGenerator thing
 #include <cstdlib>
 #include <ctime>
 
+// forward declare blackjack
+void playBlackjack();
 
 class HelloWorld
 {
@@ -50,6 +55,8 @@ int main()
     std::rand();
     Monster skeleton{ MonsterGenerator::generateMonster() };
     skeleton.print();
- 
+
+    playBlackjack();
+    
     return 0;
 }
