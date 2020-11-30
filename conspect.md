@@ -1506,3 +1506,7 @@ This also works with function params: `printValue(5 + 3);`
 - Despite being not considered a member of the class, we can still define friend functions inside class, but it's not recommended, as non-trivial function definitions are better kept in a separate .cpp file
 - If we want to overload operator for operands of different types, we need to do it for all positioning cases. E.g.: `Cents(4) + 6` would call `operator+(Cents, int)`, while `6 + Cents(4)` would call `operator+(int, Cents)`. So we need two functions for this case
 - We can implement overloaded operators using other overloaded operators. E.g. `Cents operator+(int value, const Cents &c) ...` can be implemented by calling the already implemented *operator+(Cents, int)*: `... { return c + value; }`. This should be done to reduce code, so if the implementation is trivial (e.g. one line of code), then it's probably not worth it
+
+## Operator overloading via member function
+- If we don't need access to private members, we can use normal functions instead of friend functions. The usage is almost identical, but we work with private variables via access functions, and we need to forward declare them in headers outside of the class: `class Cents{ ... }; Cents operator+(const Cents &c1, const Cents &c2);`
+- **Rule**: Prefer overloading operators as normal functions instead of friends if it’s possible to do so without adding additional functions. (e.g. don't add additional access functions just to overload an operator as a normal function)
