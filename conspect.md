@@ -1481,3 +1481,28 @@ This also works with function params: `printValue(5 + 3);`
 - From C++11, we can use `<chrono>` library. Though as using it is a bit *arcane* (as learncpp author called it), we can encapsulate chrono's timing functionality we need into a class. See `conspect/src/timer.cpp` (there's also how to use it)
 - Make sure to use release build when timing, not debug
 - Results of timing can be significantly impacted by a lot of things (e.g. system doing cpu/memory/hard drive intensive stuff)
+
+# Operator overloading
+- **Operator overloading** - using function overloading to overload operators
+- We can think of `x + y` as `operator+(x, y)`
+- When evaluating expression containing an operator, compiler uses these rules:
+    - If *all* of the operands are fundamental data types, compiler will call built-in routine if one exists. If it doesn't exist, compiler will produce a compiler error
+    - If *any* of the operands are user data types (e.g. class or enum), the compiler looks to see whether the type has a matching overloaded operator function. If it can't find one, it will try to convert one or more user-def type operands into fundamental data types (via an *overloaded typecase*). If that fails, then - compiler error
+- Limitations on operator overloading:
+    1. Almost any existing C++ operator can be overloaded. Exceptions: conditional (`?:`), `sizeof`, scope (`::`), member selector (`.`), member pointer selector (`.*`), `typeid`, and the casting operators
+    2. I can only overload operators that exist. Can't create new operators or rename existing.
+    3. At least one of the operands of overloaded operator must be a user-defined type
+    4. It is not possible to change the number of operands an operator supports
+    5. All operators keep their default precedence and associativity, this can't be changed (e.g. if we try to overload bitwise XOR (`^`) to do exponentiation, this won't work, as `^` has lower precedence than basic arithmetic operators. So we'd need to always use parentheses, and it's counter-intuitive: e.g. `4 + (3 ^ 2)` (also, we can't overload it like this, because 3 and 2 are both fundamental data types))
+- **Rule**: *When overloading operators, it’s best to keep the function of the operators as close to the original intent of the operators as possible.*
+- **Rule**: *If the meaning of an operator when applied to a custom class is not clear and intuitive, use a named function instead.*
+- We can overload operators in three ways:
+    1. Member function way
+    2. Friend function way
+    3. Normal function way
+
+## Operator overloading via member function
+- See `conspect/src/overloading-operators/using-friend-function.cpp`. This will be similar for all arithmetic operations (+, -, *, /)
+- Despite being not considered a member of the class, we can still define friend functions inside class, but it's not recommended, as non-trivial function definitions are better kept in a separate .cpp file
+- If we want to overload operator for operands of different types, we need to do it for all positioning cases. E.g.: `Cents(4) + 6` would call `operator+(Cents, int)`, while `6 + Cents(4)` would call `operator+(int, Cents)`. So we need two functions for this case
+- We can implement overloaded operators using other overloaded operators. E.g. `Cents operator+(int value, const Cents &c) ...` can be implemented by calling the already implemented *operator+(Cents, int)*: `... { return c + value; }`. This should be done to reduce code, so if the implementation is trivial (e.g. one line of code), then it's probably not worth it
