@@ -1487,7 +1487,7 @@ This also works with function params: `printValue(5 + 3);`
 - We can think of `x + y` as `operator+(x, y)`
 - When evaluating expression containing an operator, compiler uses these rules:
     - If *all* of the operands are fundamental data types, compiler will call built-in routine if one exists. If it doesn't exist, compiler will produce a compiler error
-    - If *any* of the operands are user data types (e.g. class or enum), the compiler looks to see whether the type has a matching overloaded operator function. If it can't find one, it will try to convert one or more user-def type operands into fundamental data types (via an *overloaded typecase*). If that fails, then - compiler error
+    - If *any* of the operands are user data types (e.g. class or enum), the compiler looks to see whether the type has a matching overloaded operator function. If it can't find one, it will try to convert one or more user-def type operands into fundamental data types (via an *overloaded typecast*). If that fails, then - compiler error
 - Limitations on operator overloading:
     1. Almost any existing C++ operator can be overloaded. Exceptions: conditional (`?:`), `sizeof`, scope (`::`), member selector (`.`), member pointer selector (`.*`), `typeid`, and the casting operators
     2. I can only overload operators that exist. Can't create new operators or rename existing.
@@ -1600,3 +1600,58 @@ Now we can `Cents cents{}; std::cin >> cents;`
 `double& Matrix::operator()(int row, int col) { return m_data[row][col]; }` - we couldn't do this with `operator[]` because it can only take one index. Use it: `matrix(1, 2) = 4.5;`
 - It may be tempting to use `operator()` for many different purposes, but it's strongly discouraged because the *()* symbol doesn't give any indication of what the operator is doing.
 - `Operator()` is also commonly overloaded to implement **functors** (or **function objects**), which are classes that operate like functions. The advantage of a functor over normal functions is that functors can store data in member variables. E.g.: see `conspect/src/overloading-operators/functors.cpp`
+
+## Overloading typecasts
+- **User-defined conversions** allow us to convert our class into another data type
+- Providing user-defined conversion for `Cents` by overloading the int typecast:
+
+`operator int() const { return m_cents; }` (public member function)
+- User-defined conversions do not take parameters, as there is no way to pass arguments to them
+- User-defined conversions do not have return type
+- Now if we have some function that takes int parameter: `void printInt(int value) { std::cout << value; }`, we can call `printInt(cents);` and cents will be implicitly converted to int by calling our overloaded operator function (or we can just do `std::cout << cents;` instead of *printInt* and it'll work). We can also now explicitly cast Cents: `Cents cents{ 7 }; int c{ static_cast<int>(cents) };`
+- We can provide user-defined conversions for user-defined data types. E.g., in `class Dollar`:
+
+`operator Cents() const { return Cents(m_dollars * 100); } // Allow us to convert Dollars into Cents`
+
+## Copy constructor
+- **Copy constructor** is a special type of constructor used to create a new object as a copy of an existing object. Like default constructor, if we don't provide copy constructor for class, C++ will create a public copy constructor for us
+- By default, the created copy constructor utlizes memberwise initialization. **Memberwise initialization** means that each member of the copy is initialized directly from the member of the class being copied
+- We can provide out own copy constructor (e.g. for Fraction):
+
+`Fraction(const Fraction &fr): m_numerator(fr.m_numerator), m_denominator(fr.m_denominator) { /* no need to check for a denominator of 0, as fr must already be a valid Fraction */ }`
+
+Then we use can use, for example, direct initialization with copy constructor:
+
+`Fraction fiveThirds(5, 3); Fraction fCopy(fiveThirds);`
+- It's fine to use default copy constructor if it meets our needs
+- **Note**: Member functions of a class can access the private members of parameters of the same class type (example - the above copy constructor)
+- **Elision** - case, when the compiler is allowed to opt out of calling the copy constructor and just do a direct initialization. E.g.: `Fraction fiveThirds(Fraction(5, 3));` This takes two steps - 1. create anonymous object, 2. call the copy constructor. The compiler may (or may not) simply do `Fraction fiveThirds(5, 3);`, which only requires one constructor call (to `Fraction(int, int)`).
+
+Note: Since C++17, some cases of copy elision (including the example above) have been made mandatory.
+- We can prevent making copies of our class by making the copy constructor private. Then, any initialization that would use the copy constructor will cause a compile error, even if the copy constructor is elided
+
+## Copy initialization
+- For classes, `Fraction six = Fraction(6);` is evaluated the same way as `Fraction six(Fraction(6));`. So copy constructor may (from C++17 - will) be elided. **Rule**: *Avoid using copy initialization, use uniform initialization instead.*
+- Copy initialization is used in a few other places. One of them - when passing or returning a class by value. Usually, the copy constructor can not be elided in these cases.
+
+It may be elided in such situation, even though `s` is returned by value:
+
+`class Something{}; Something foo() { Something s; return s; }`
+
+then `Something s = foo();`
+
+## Converting constructors, explicit, delete
+- By default, C++ will treat any constructor as an implicit conversion operator. E.g. we have `Fraction(int num = 0, int denom = 1): m_num(num), m_denom(denom) { assert(denom != 0) }` constructor and `void printFraction(const Fraction &f) { std::cout << f; }` function (not Fraction member). We call `printFraction(6);`, compiler will implicitly conver literal 6 to Fraction object when initializing parameter `f` using the `Fraction(int, int)` constructor. This implicit conversion works for all kinds of initialization (direct, uniform, copy)
+- Constructors eligible to be used for implicit conversions are called **converting constructors**. Prior to C++11 only constructors with one parameter could be converting. With new uniform initialization in C++11, all constructors can be
+- Unlike the Fraction case, implicit conversion may be undesirable or lead to unexpected behaviour. See `conspect/src/overloading-operators/undesirable-implicit-conversion.cpp`
+- For the example in file, there are several ways to address the issue:
+    1. Make constructors (and conversion functions) *explicit* via `explicit` keyword. Constructors and conversion functions made explicit will not be used for *implicit* conversions or copy initialization:
+    
+        `explicit MyString(int x) { m_string.resize(x); }`
+        
+        Note, that this only prevents *implicit* conversions. Explicit conversions (via casting) are still allowed: `std::cout << static_cast<MyString>(5);`
+
+        Direct and uniform initialization will also still convert parameters to match (uniform initialization won't do narrowing conversions, but will do other types of conversions): `MyString str{ 'x' };` is allowed
+
+    2. We can partially disallow `'x'` from being converted to `MyString` (both implicit and explicit) by adding `MyString(char)` constructor and making it private: `MyString(char){}`. However, this constructor can still be used inside the class.
+    3. We can completely disallow this conversion by using the `delete` keyword (from C++11) to delete a function: `public: ... MyString(char) = delete;`. Now any use of this constructor is a compile error. Copy constructor and overloaded operators may also be deleted
