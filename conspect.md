@@ -1510,3 +1510,15 @@ This also works with function params: `printValue(5 + 3);`
 ## Operator overloading via member function
 - If we don't need access to private members, we can use normal functions instead of friend functions. The usage is almost identical, but we work with private variables via access functions, and we need to forward declare them in headers outside of the class: `class Cents{ ... }; Cents operator+(const Cents &c1, const Cents &c2);`
 - **Rule**: Prefer overloading operators as normal functions instead of friends if it’s possible to do so without adding additional functions. (e.g. don't add additional access functions just to overload an operator as a normal function)
+
+## Overloading io operators
+- To overload `<<` operator for output:
+
+`std::ostream& operator<<(std::ostream &out, const Cents &c) { out << "Cents(" << c.m_cents << ')'; return out; }`
+
+Now we can `std::cout << Cents{ 5 } << '\n';`
+- To overload '>>' operator for input:
+ 
+`std::istream& operator>>(std::istream &in, Cents &c) { in >> c.m_cents; return in; }`
+
+Now we can `Cents cents{}; std::cin >> cents;`
