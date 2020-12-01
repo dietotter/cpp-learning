@@ -1501,13 +1501,13 @@ This also works with function params: `printValue(5 + 3);`
     2. Friend function way
     3. Normal function way
 
-## Operator overloading via member function
+## Operator overloading via friend function
 - See `conspect/src/overloading-operators/using-friend-function.cpp`. This will be similar for all arithmetic operations (+, -, *, /)
 - Despite being not considered a member of the class, we can still define friend functions inside class, but it's not recommended, as non-trivial function definitions are better kept in a separate .cpp file
 - If we want to overload operator for operands of different types, we need to do it for all positioning cases. E.g.: `Cents(4) + 6` would call `operator+(Cents, int)`, while `6 + Cents(4)` would call `operator+(int, Cents)`. So we need two functions for this case
 - We can implement overloaded operators using other overloaded operators. E.g. `Cents operator+(int value, const Cents &c) ...` can be implemented by calling the already implemented *operator+(Cents, int)*: `... { return c + value; }`. This should be done to reduce code, so if the implementation is trivial (e.g. one line of code), then it's probably not worth it
 
-## Operator overloading via member function
+## Operator overloading via normal function
 - If we don't need access to private members, we can use normal functions instead of friend functions. The usage is almost identical, but we work with private variables via access functions, and we need to forward declare them in headers outside of the class: `class Cents{ ... }; Cents operator+(const Cents &c1, const Cents &c2);`
 - **Rule**: Prefer overloading operators as normal functions instead of friends if it’s possible to do so without adding additional functions. (e.g. don't add additional access functions just to overload an operator as a normal function)
 
@@ -1517,8 +1517,32 @@ This also works with function params: `printValue(5 + 3);`
 `std::ostream& operator<<(std::ostream &out, const Cents &c) { out << "Cents(" << c.m_cents << ')'; return out; }`
 
 Now we can `std::cout << Cents{ 5 } << '\n';`
-- To overload '>>' operator for input:
+- To overload `>>` operator for input:
  
 `std::istream& operator>>(std::istream &in, Cents &c) { in >> c.m_cents; return in; }`
 
 Now we can `Cents cents{}; std::cin >> cents;`
+
+## Operator overloading via member function
+- When overloading using a member function:
+    - The overloaded operator must be added as member function of the left operand
+    - The left operand becomes the implicit `*this` object
+    - All other operands become function parameters
+- See `conspect/src/overloading-operators/using-member-function.cpp`
+- **Rules of thumb** for which type of function to use:
+    - If overloading assignment (`=`), subscript (`[]`), function call (`()`), or member selection (`->`), do so as a *member function* (the language requires so)
+    - If overloading unary operator, use *member function*
+    - If overloading binary operator that does not modify its left operand (e.g. `operator+`), use *normal* (preferred) or *friend function*
+    - If overloading binary operator that modifies its left operand, but you can’t modify the definition of the left operand (e.g. `operator<<`, which has a left operand of type `ostream`), use *normal* (preferred) or *friend function*
+    - If overloading binary operator that modifies its left operand (e.g. `operator+=`), and you can modify the definition of the left operand, use *member function*
+
+## Overloading unary operators
+- Typically overloaded using member functions:
+
+`Cents Cents::operator-() const { return Cents(-m_cents); }` - because the original Cents is not modified, we make this const, so it could be called on const Cents objects too
+- Overload unary `!` to see if point is set at the origin:
+
+`bool Point::operator!() const { return (m_x == 0.0 && m_y == 0.0); }`
+- If we overloading unary `+`, we can just do
+
+`Cents Cents::operator+() const { return *this; }`, because we are returning the exact copy of the object

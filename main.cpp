@@ -1,124 +1,54 @@
 #include <iostream>
-#include <limits>
  
-class Fraction
+class Point
 {
 private:
-	int m_numerator{ 0 };
-	int m_denominator{ 1 };
-
-    void reduce();
+    double m_x, m_y, m_z;
  
 public:
-	Fraction(int num = 0, int denom = 1): m_numerator{num}, m_denominator{denom}
+    Point(double x=0.0, double y=0.0, double z=0.0):
+        m_x{x}, m_y{y}, m_z{z}
     {
-        reduce();
     }
-
-    // greatest common denominator
-    static int gcd(int a, int b) {
-        return (b == 0) ? (a > 0 ? a : -a) : gcd(b, a % b);
-    }
-
-    friend Fraction operator*(const Fraction &f1, const Fraction &f2);
-    // We can remove the two operators below, and the program will still work
-    // (because of conversion of int to Fraction using the constructor Fraction(int, int))
-    // However, it'll be slower, so it's better to implement overloaded variants
-    friend Fraction operator*(const Fraction &f, int value);
-    friend Fraction operator*(int value, const Fraction &f);
-
-	friend std::ostream& operator<<(std::ostream &out, const Fraction &f);
-	friend std::istream& operator>>(std::istream &in, Fraction &f);
+ 
+    // Convert a Point into its negative equivalent
+    Point operator- () const;
+ 
+    Point operator+ () const;
+ 
+    // Return true if the point is set at the origin
+    bool operator! () const;
+ 
+    double getX() const { return m_x; }
+    double getY() const { return m_y; }
+    double getZ() const { return m_z; }
 };
-
-void Fraction::reduce() {
-    if (m_numerator == 0 || m_denominator == 0)
-    {
-        return;
-    }
-
-    int gcdValue{ Fraction::gcd(m_numerator, m_denominator) };
-
-    m_numerator /= gcdValue;
-    m_denominator /= gcdValue;
-}
-
-Fraction operator*(const Fraction &f1, const Fraction &f2)
+ 
+// Convert a Point into its negative equivalent 
+Point Point::operator- () const
 {
-    Fraction fr{ f1.m_numerator * f2.m_numerator, f1.m_denominator * f2.m_denominator };
-
-    fr.reduce();
-
-    return fr;
+    return Point(-m_x, -m_y, -m_z);
 }
 
-Fraction operator*(const Fraction &f, int value)
+Point Point::operator+ () const
 {
-    Fraction fr{ f.m_numerator * value, f.m_denominator };
-
-    fr.reduce();
-
-    return fr;
+    return *this;
 }
-
-Fraction operator*(int value, const Fraction &f)
+ 
+// Return true if the point is set at the origin, false otherwise
+bool Point::operator! () const
 {
-    return f * value;
+    return (m_x == 0.0 && m_y == 0.0 && m_z == 0.0);
 }
-
-std::ostream& operator<<(std::ostream &out, const Fraction &f)
-{
-    out << f.m_numerator << '/' << f.m_denominator;
-
-    return out;
-}
-
-std::istream& operator>>(std::istream &in, Fraction &f)
-{
-    in >> f.m_numerator;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '/');
-    in >> f.m_denominator;
-
-    f.reduce();
-
-    return in;
-}
-
+ 
 int main()
 {
-	Fraction f1{2, 5};
-    std::cout << f1 << '\n';
+    Point point{}; // use default constructor to set to (0.0, 0.0, 0.0)
  
-    Fraction f2{3, 8};
-    std::cout << f2 << '\n';
+    if (!point)
+        std::cout << "point is set at the origin.\n";
+    else
+        std::cout << "point is not set at the origin.\n";
  
-    Fraction f3{ f1 * f2 };
-    std::cout << f3 << '\n';
- 
-    Fraction f4{ f1 * 2 };
-    std::cout << f4 << '\n';
- 
-    Fraction f5{ 2 * f2 };
-    std::cout << f5 << '\n';
- 
-    // if we remove const from operator*(const Fraction &f1, const Fraction &f2),
-    // this line won't work, because we're multiplying temporary Fraction objects,
-    // and non-const references cannot bind to temporaries
-    Fraction f6{ Fraction{1, 2} * Fraction{2, 3} * Fraction{3, 4} };
-    std::cout << f6 << '\n';
-
-    Fraction f7{0, 6};
-    std::cout << f7 << '\n';
-
-    Fraction f8{};
-    std::cout << "Enter fraction 1 (in x/y format): ";
-    std::cin >> f8;
-
-    Fraction f9{};
-    std::cout << "Enter fraction 2: ";
-    std::cin >> f9;
-
-    std::cout << f8 << " * " << f9 << " is " << f8 * f9 << '\n';
-
-	return 0;
+    return 0;
 }
