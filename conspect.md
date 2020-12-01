@@ -1546,3 +1546,13 @@ Now we can `Cents cents{}; std::cin >> cents;`
 - If we overloading unary `+`, we can just do
 
 `Cents Cents::operator+() const { return *this; }`, because we are returning the exact copy of the object
+
+## Overloading comparison operators
+- Because comparison operators are binary operators that don't modify their left operand, use normal/friend functions:
+
+`bool operator== (const Car &c1, const Car &c2) { return c1.m_model == c2.m_model && c1.m_make == c2.m_make; }`
+
+`bool operator!= (const Car &c1, const Car &c2) { return !(c1 == c2); }`
+- **Recommendation**: Don’t define overloaded operators that don’t make sense for your class (e.g. for class Car, operators `<` or `>` wouldn't make sense)
+- There is an exception to the above recommendation - we might want to overload the comparison operators for comparing when sorting purposes (e.g. Car could be sorted based on make and model alphabetically). Some of the container classes in the standard library (classes that hold sets of other classes) require an overloaded `operator<` so they can keep the elements sorted
+- Because `operator>` is the logical oposite of `operator<=` (the same is true for `operator<` and `operator>=`), we can use one to define the other
