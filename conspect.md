@@ -1655,3 +1655,26 @@ then `Something s = foo();`
 
     2. We can partially disallow `'x'` from being converted to `MyString` (both implicit and explicit) by adding `MyString(char)` constructor and making it private: `MyString(char){}`. However, this constructor can still be used inside the class.
     3. We can completely disallow this conversion by using the `delete` keyword (from C++11) to delete a function: `public: ... MyString(char) = delete;`. Now any use of this constructor is a compile error. Copy constructor and overloaded operators may also be deleted
+
+## Overloading assignment operator
+- **Assignment operator** (`operator=`) is used to copy values from one object to another *already existing object*
+- Copy constructor initializes new objects, whereas assignment operator  replaces the contents of existing objects. Their usage:
+    - If new object has to be created before the copying can occur, the copy constructor is used (note: this includes passing or returning objects by value)
+    - If new object does not have to be created before the copying can occur, the assignment operator is used
+- Must be overloaded as member
+- Simple implementation:
+
+`Fraction& Fraction::operator= (const Fraction &fr) { m_num = fr.m_num; m_denom = fr.m_denom; return *this; /* for chaining assignment */ }`
+- Issues can occur due to self assignment (`Fraction f1(5, 3); f1 = f1;`). In the above form, it is safe (and useless). It can be dangerous though, if an assignment operator needs to dynamically assign memory. See `conspect/src/overloading-operators/dangerous-assignment-overloading.cpp`
+- The problem of example in a file can be solved by doing a *self-assignment check*. Before anything else in `MyString::operator=`, we could write: 
+
+`if (this == &str) { return *this; }` We are checking if the address of our implicit object is the same as the address of the object being passed. Because this is just address comparison, it should be fast and doesn't need `operator==` to be overloaded
+- When not to handle self-assignment:
+    1. No need to check for self-assignment in a copy constructor, because it is only called when new objects are being constructed
+    2. The check may be omitted in classes that can naturally handle self-assignment (like the `Fraction` example above). Though we still might include the self-assignment guard just so the function doesn't do the unnecessary work
+- Unlike other operators, compiler will provide a default public assignment operator if you don't provide one. It does memberwise assignment (like default copy constructor)
+- Like other ops and constructors, we can prevent assignments from being made by making assignment operator private or by using `delete` keyword
+
+## Shallow vs deep copying
+- Memberwise copy is also known as **shallow copy**. It means that C++ copies each member of the class individually (using the assignment op for overloaded operator=, and direct initialization for the copy constructor). This works well when classes are simple (e.g. do not contain dynamically allocated memory)
+- If class has dynamically allocated memory, shallow copy can lead to problems. See `conspect/src/overloading-operators/shallow-copy-problems.cpp`
