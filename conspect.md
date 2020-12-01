@@ -1590,3 +1590,13 @@ Now we can `Cents cents{}; std::cin >> cents;`
 `void Stupid::operator[] (const std::string& index) { std::cout << index; }`
 
 `Stupid stupid{}; stupid["Hello, cocksuckers!"]`
+- I wondered how to overload double subscript operator `[][]`: [The accepted answer and Bo Perrson's one](https://stackoverflow.com/questions/6969881/operator-overload)
+
+## Overloading parenthesis operator
+- Must be overloaded as member
+- Can have any number of parameters
+- `Operator()` is sometimes overloaded with two params to index multidimensional arrays, or to retrieve a subset of one-dimensional array. E.g., we can implement taking element of a matrix:
+
+`double& Matrix::operator()(int row, int col) { return m_data[row][col]; }` - we couldn't do this with `operator[]` because it can only take one index. Use it: `matrix(1, 2) = 4.5;`
+- It may be tempting to use `operator()` for many different purposes, but it's strongly discouraged because the *()* symbol doesn't give any indication of what the operator is doing.
+- `Operator()` is also commonly overloaded to implement **functors** (or **function objects**), which are classes that operate like functions. The advantage of a functor over normal functions is that functors can store data in member variables. E.g.: see `conspect/src/overloading-operators/functors.cpp`
