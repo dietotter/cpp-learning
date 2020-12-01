@@ -1556,3 +1556,37 @@ Now we can `Cents cents{}; std::cin >> cents;`
 - **Recommendation**: Don’t define overloaded operators that don’t make sense for your class (e.g. for class Car, operators `<` or `>` wouldn't make sense)
 - There is an exception to the above recommendation - we might want to overload the comparison operators for comparing when sorting purposes (e.g. Car could be sorted based on make and model alphabetically). Some of the container classes in the standard library (classes that hold sets of other classes) require an overloaded `operator<` so they can keep the elements sorted
 - Because `operator>` is the logical oposite of `operator<=` (the same is true for `operator<` and `operator>=`), we can use one to define the other
+
+## Overloading increment and decrement operators
+- Unary ops => overload as members
+- To distinguish between prefix incr/decr and postfix incr/decr, we use the **dummy variable** (or **dummy argument**) for the postfix ones:
+
+`Digit& operator++(); // prefix`
+
+`Digit operator++(int); // postfix`
+- For implementation, see `conspect/src/overloading-operators/overloading-increment-decrement.cpp`. Notes:
+    - Because the dummy parameter isn't used in implementation, we haven't given it a name. This tells the compiler to treat this variable as a placeholder, which means it won't warn us that we declared a var that is never used
+    - The prefix and postfix operators do the same job. The difference is that prefix ops return the object after it has been incremented/decremented (so we do the operation and return `*this`). For postfix, we need to return the state of the object before the incr/decr. So we create *temp* variable, then do operation on the original object, and then return *temp* by value. That's why the prefix operator is usually preferred - because postfix has the overhead of creating temporary variable and returning by value
+    - Post-incr/decr definitions use pre-incr/decr to avoid duplicate code
+
+## Overloading subscript operator
+- Must be overloaded as member
+- Will take one parameter - the subscript that user places between the hard braces `[..]`
+- E.g. for `class IntList`, which has an int array inside:
+
+`int& IntList::operator[] (int index) { return m_list[index]; }`
+- We're returning reference, because we might need to use the result on the left side of expression (e.g. `intList[4] = 5;`), so we need to return an l-value
+- We can set default value for overloaded `operator[]`, but there is no point, because using `[]` without a subscript inside is not a valid syntax
+- For const `IntList` objects, we can define a const version of `operator[]` separately:
+
+`const int& IntList::operator[] (int index) const { return m_list[index]; }`
+- We can do the error checking in overloaded `operator[]`:
+
+`int& IntList::operator[] (int index) { assert(index >= 0 && index < 10); return m_list[index]; }` (assuming m_list has a fixed length of 10)
+- Pointers to objects and overloaded `operator[]` don't mix: `IntList *intList{ new IntList{} }; list[2] = 3; delete list;` - error: this will assume we're accessing index 2 of an array of IntLists
+- The proper syntax for the above would be to dereference the pointer first: `(*list)[2] = 3;` (though still don't set pointers to objects if there is no need)
+- The parameter doesn't have to be `int` - we can use `std::string&`, for example. It would be useful if we're writing classes that use words as indices. Also, some (bad) example to use `operator[]` for printing:
+
+`void Stupid::operator[] (const std::string& index) { std::cout << index; }`
+
+`Stupid stupid{}; stupid["Hello, cocksuckers!"]`
