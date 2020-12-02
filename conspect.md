@@ -1678,3 +1678,9 @@ then `Something s = foo();`
 ## Shallow vs deep copying
 - Memberwise copy is also known as **shallow copy**. It means that C++ copies each member of the class individually (using the assignment op for overloaded operator=, and direct initialization for the copy constructor). This works well when classes are simple (e.g. do not contain dynamically allocated memory)
 - If class has dynamically allocated memory, shallow copy can lead to problems. See `conspect/src/overloading-operators/shallow-copy-problems.cpp`
+- One answer to above problem is to do deep copy on any non-null pointers being copied. **Deep copy** allocates memory for the copy and then copies the actual value, so that the copy lives in distinct memory from the source. Example: `conspect/src/overloading-operators/deep-copy.cpp`
+- Differences of assignment operator comparing to copy constructor for deep copy:
+    - A self-assignment check
+    - Returning `*this` so we can chain assignment operator
+    - We need to explicitly dealocate any value that the string is already holding to avoid memory leaks
+- The better solution is to use standard library classes, such as std::string and std::vector, because they hangle all of their memory management, and have overloaded copy constructors and assignment ops with proper deep copying
