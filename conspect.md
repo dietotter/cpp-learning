@@ -1684,3 +1684,37 @@ then `Something s = foo();`
     - Returning `*this` so we can chain assignment operator
     - We need to explicitly dealocate any value that the string is already holding to avoid memory leaks
 - The better solution is to use standard library classes, such as std::string and std::vector, because they hangle all of their memory management, and have overloaded copy constructors and assignment ops with proper deep copying
+
+# Object relations
+- **Object composition** - process of building complex objects from simpler ones. "*Has-a*" type relationship (A car "has-a" steering wheel. I "have-a" heart). The complex object is sometimes called the *whole* (or *parent*). The simpler object is called the *part*, *child*, or *component*
+- Structs and classes are sometimes referred to as **composite types**, because when we build them with data members, we're constructing a complex object from simpler parts (object composition)
+- Two subtypes of object composition: *composition* and *aggregation*
+
+## Composition
+- To qualify as **composition**, an object and part must have the following relationship:
+    - The part (member) is part of the object (class)
+    - The part can only belong to one object at a time
+    - The part has its existence managed by the object
+    - The part doesn't know about the existence of the object
+- Example: person's body and a heart:
+    1. Heart is part of the body
+    2. Heart can only be in one body at a time. *Note*: composition has nothing to say about the transferability of parts. We can transplant heart from one body to another, and after that it still meets composition requirements
+    3. When person's body is created, heart is created. When it dies, heart dies with it (composition is sometimes called "*death relationship*")
+    4. Heart operates unaware that it is part of a body (**unidirectional** relationship - body knows about heart, but not the other way around)
+- Composition models "*part-of*" relationships (heart is part-of body, numerator is part-of fraction). Is often used to model physical relationships, where one object is physically contained inside another
+- The parts can be singular of multiplicative (could be modeled as array)
+- Typically implemented as structs or classes with normal data members. If composition needs to do dynamic alloc/dealloc, it may be implemented using pointer data members. The class should be responsible for doing memory management itself (not the user of the class)
+- If you *can* design a class using composition, you *should*
+- Composition example of creature class that uses a point class to hold the creature's location: see `conspect/src/object-relations/composition`
+- Although most compositions directly create their parts when the composition is created and directly destroy them when composition is destroyed, there are some variations of composition that bend these rules a bit:
+    - A composition may defer creation of some parts until they are needed (e.g. string class may not create a dynamic array of chars until user assigns the string some data to hold)
+    - A composition may opt to use a part that has been given to it as input rather than create the part itself
+    - A composition may delegate destruction of its parts to some other object (e.g. to garbage collection routine)
+
+The key point is that composition should manage its parts without the user of the composition need to manage anything.
+- Using a subclass instead of implementing a feature directly into composition (like `Point2D` in example from src) has a number of benefits:
+    1. Each individual class can be kept relatively simple and straightforward, focused on performing one task well. Makes those easier to write and understand (Point2D only worries about point-related stuff)
+    2. Each subclass can be self-contained, which makes them reusable  (Point2D can be used multiple times in `Creature`, or in completely different class)
+    3. The parent class can have subclasses do the hard work, and instead focus on coordinating the data flow between the subclasses. Lowers the overall complexity of the parent object, because it can delegate tasks to children, who already know how to do those tasks (when we move Creature, it delegates the task to Point2D, which already understands how to set a point. Thus, Creature doesn't have to worry about how such things whould be implemented)
+
+A good rule of thumb is that each class should be built to accomplish a single task. The task should either be the storage and manipulation of data (Point2D, std::string), OR the coordination of subclasses (Creature). Ideally not both.
