@@ -1717,4 +1717,43 @@ The key point is that composition should manage its parts without the user of th
     2. Each subclass can be self-contained, which makes them reusable  (Point2D can be used multiple times in `Creature`, or in completely different class)
     3. The parent class can have subclasses do the hard work, and instead focus on coordinating the data flow between the subclasses. Lowers the overall complexity of the parent object, because it can delegate tasks to children, who already know how to do those tasks (when we move Creature, it delegates the task to Point2D, which already understands how to set a point. Thus, Creature doesn't have to worry about how such things whould be implemented)
 
-A good rule of thumb is that each class should be built to accomplish a single task. The task should either be the storage and manipulation of data (Point2D, std::string), OR the coordination of subclasses (Creature). Ideally not both.
+A good rule of thumb is that each class should be built to accomplish a single task. The task should either be the storage and manipulation of data (Point2D, std::string), OR the coordination of subclasses (Creature). Ideally not both. Creature's job is to worry about how to coordinate the data flow and ensure that each of the subclasses knows *what* it is supposed to do. It's up to the individual subclasses to worry about *how* they will do it.
+
+## Aggregation
+- To qualift as **aggregation**, a whole object and its parts must have the following relationship:
+    - The part (member) is part of the object (class)
+    - The part can belong to more than one object at a time
+    - The part does not have its existence managed by the object
+    - The part does not know about the existence of the object
+- Example of aggregate relationship: relationship between a person and their home address. Person has an address, however, that address can belong to more than one person at a time (e.g. for your family members). The address isn't managed by the person - it existed before the person got there, and will exist after person is gone. Also, person knows their address, addresses don't know what people live there.
+- Another example: a car engine is part of the car. Though it belongs to the car, it can belong to other things (for example, person owning the car). The car is not responsible for creation or destruction of the engine. The car knows it has an engine, the engine doesn't know it's part of the car
+- Aggregation models "*has-a*" relationships (department has teachers, car has an engine)
+- Parts can be singular of multiplicative
+- Implemented similar to composition: we add parts as member variables, but they are typically either references or pointers that are used to point at objects that have been created outside of the class scope. Consequently, aggregation usually either takes the objects it is going to point to as constructor parameters, or it begins empty and the subobjects are added later via access functions or operators. When the class is destroyed, the pointer or reference member variables will be destroyed, but not deleted - the parts themselves will still exist.
+- Example of aggregation: see `conspect/src/object-relations/aggregation.cpp`. It hase a couple simplifications: the department will only hold one teacher; the teacher will be unaware of what department they're part of. Though it may seem silly that `Teacher` doesn't know what `Department` they're working for, it's fine in the context of a given program
+- **Rule**: Implement the simplest relationship type that meets the needs of your program, not what seems right in real-life.
+- For example, if writing car body shop simulator, we may want to implement a car and engine as an aggregation. However, if writing a racing simulation, we may want to implement a car and engine as a composition, since the engine will never exist outside of the car in that context.
+- The concepts of composition and aggregation are not mutually exclusive and can be mixed within the same class. We can write a class responsible for destroying some parts, but not the other. For out Teacher-Department example, we could add a Department name, which would utilize composition, but Teacher would still be added by aggregation, and created/destroyed separately.
+- Aggregations are useful, but more dangerous, because they don't handle deallocation of their parts. For this reason, compositions should be preferred over aggregations.
+- Historically, unlike composition, definitions of aggregation may differ.
+- *Note*: Don't confuse aggregation with aggregates (such as structs or classes)
+- Summing up:
+    - Composition:
+        - Typically use normal member variables
+        - Can use pointer members if the class handles object allocation/deallocation itself
+        - Responsible for creation/destruction of parts
+    - Aggregation:
+        - Typically use pointer or reference members that point to or reference objects that live outside the scope of the aggregate class
+        - Not responsible for creating/destroying parts
+
+### std::reference_wrapper
+- In the above Teacher/Department example, if we wanted a list of Teacher references, it would be illegal, because refs have to be initialized and cannot be reassigned. E.g.:
+
+`std::vector<const Teacher&> m_teachers{}; // Illegal`
+
+Instead of refs, we could use pointers, but that would open the possibility to store or pass null pointers. To solve this, there is `std::reference_wrapper`
+- `std::reference_wrapper` is a class that acts like a reference, but also allows assignment and copying, so it’s compatible with lists like `std::vector`
+    1. Lives in `<functional>` header
+    2. When creating object wrapped by `std::reference_wrapper`, it can't be anonymous object (because then reference would be left dangling)
+    3. If we want to get object back from `std::reference_wrapper`, we use `get()` member function
+- Example usage: see `conspect/src/reference-wrapper.cpp`
