@@ -1760,6 +1760,7 @@ Instead of refs, we could use pointers, but that would open the possibility to s
 - Example usage: see `conspect/src/reference-wrapper.cpp`
 
 ## Association
+- Weaker type of object relationship than composition or association
 - To qualify as an **association**, object must have the following relationship:
     - The associated object (member) is otherwise unrelated to the object (class)
     - The associated object (member) can belong to more than one object (class) at a time
@@ -1785,3 +1786,50 @@ This can lead to a chain of associations (where Course's prerequisite also needs
 
 ## Summary table for object composition and association
 - See `conspect/text/object-relations/object-relations-table.md`
+
+## Dependencies
+- **Dependency** occurs when one object invokes another object's functionality in order to accomplish some specific task (e.g. flowers are dependent upon bees to pollinate them, in order to grow fruit; person who broke their foot is dependent upon crutches to get around (but not otherwise))
+- Weaker relationship than association, but still, change to object being depended upon may break functionality in the dependent caller
+- Unidirectional relationship
+- Example of dependency: class that uses `std::cout` uses it for printing something to console, but not otherwise. E.g. `class Average` from `tests/overloading-operators/quiz/Average.h` isn't directly related to `std::cout`, but it has dependency on *std::cout* since `operator<<` uses *std::cout* to print the Average to console
+
+### Dependencies vs Association
+- Associations are a relationship between two classes at the class level - one class keeps a direct or indirect "link" to the associated class as a member. So, for example, we can always ask the Doctor who his Patients are
+- Dependencies typically are not represented at the class level - the object being depended on is not linked as a member. Rather, the object being depended on is typically instantiated as needed (opening a file to write data to), or passed into a function as a parameter (like *std::ostream* for *operator<<*)
+
+# Container classes
+- **Container class** is a class designed to hold and organize multiple instances of another type (either another class, or fundamental type)
+- Most well-defined containers will include (though some might omit) functions that:
+    - Create an empty container (via a constructor)
+    - Insert a new object into the container
+    - Remove an object from the container
+    - Report the number of objects currently in the container
+    - Empty the container of all objects
+    - Provide access to the stored objects
+    - Sort the elements (optional)
+- Container classes implement a "*member-of*" relationship (e.g. elements of an array are members-of (belong to) the array) - not the C++ class member sense, but conventional sense
+- Two varieties of containers:
+    - **Value containers** are compositions that store copies of the objects that they are holding (and thus are responsible for creating and destroying those copies)
+    - **Reference containers** are aggregations that store pointers or references to other objects (and thus are not responsible for creation or destruction of those objects)
+- One container can hold one type of data, unless we use templates
+- E.g. of writing an integer array container class, similar to `std::vector<int>`, from scratch: see `conspect/src/container-classes/IntArray.h`. It's going to be a *value container*
+
+## std::initializer_list
+- Is used for providing ability to initialize objects using initializer list syntax (e.g., like arrays: `int array[] { 5, 4, 3, 2, 1 };`)
+- Lives in `<initializer_list>` header
+- We need to specify the type for it to hold in angled brackets (e.g., `<int>`)
+- Has a (misnamed) size() function which returns the number of elements in the list
+- Updating `IntArray` from previous example with `std::initializer_list`: see `conspect/src/container-classes/initializer-list-int-array.cpp`
+- Much like `std::string_view`, it is very lightweight, so we pass the list by value instead of const reference (as seen in example)
+- Initializer lists will always favor a matching initializer_list constructor over other potentially matching constructors. Thus, the definition `IntArray array { 5 };` would match to `IntArray(std::initializer_list<int>)`, not `IntArray(int)`. So if we want to match `IntArray(int)` (when list constructor has been defined), we need to use copy or direct initialization. Example for `std::vector`:
+
+`std::vector<int> array(5); // Calls std::vector::vector(std::vector::size_type), initializes to [0 0 0 0 0]`
+
+`std::vector<int> array{ 5 }; // Calls std::vector::vector(std::initializer_list<int>), initializes to [5]`
+
+- We can also use `std::initializer_list` to assign new values by overloading the assignment operator to take `std::initializer_list` parameter. Note that if implementing a constructor that takes a `std::initializer_list`, we should ensure we do at least one of the following:
+    1. Provide an overloaded list assignment operator
+    2. Provide a proper deep-copying copy assignment operator
+
+For reasoning, see `conspect/text/container-classes/list-constructor-important-nuances.md`
+- **Rule**: If you provide list construction, it’s a good idea to provide list assignment as well.
