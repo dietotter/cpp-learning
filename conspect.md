@@ -1686,11 +1686,12 @@ then `Something s = foo();`
 - The better solution is to use standard library classes, such as std::string and std::vector, because they hangle all of their memory management, and have overloaded copy constructors and assignment ops with proper deep copying
 
 # Object relations
+## Object Composition
 - **Object composition** - process of building complex objects from simpler ones. "*Has-a*" type relationship (A car "has-a" steering wheel. I "have-a" heart). The complex object is sometimes called the *whole* (or *parent*). The simpler object is called the *part*, *child*, or *component*
 - Structs and classes are sometimes referred to as **composite types**, because when we build them with data members, we're constructing a complex object from simpler parts (object composition)
 - Two subtypes of object composition: *composition* and *aggregation*
 
-## Composition
+### Composition
 - To qualify as **composition**, an object and part must have the following relationship:
     - The part (member) is part of the object (class)
     - The part can only belong to one object at a time
@@ -1719,7 +1720,7 @@ The key point is that composition should manage its parts without the user of th
 
 A good rule of thumb is that each class should be built to accomplish a single task. The task should either be the storage and manipulation of data (Point2D, std::string), OR the coordination of subclasses (Creature). Ideally not both. Creature's job is to worry about how to coordinate the data flow and ensure that each of the subclasses knows *what* it is supposed to do. It's up to the individual subclasses to worry about *how* they will do it.
 
-## Aggregation
+### Aggregation
 - To qualift as **aggregation**, a whole object and its parts must have the following relationship:
     - The part (member) is part of the object (class)
     - The part can belong to more than one object at a time
@@ -1757,3 +1758,30 @@ Instead of refs, we could use pointers, but that would open the possibility to s
     2. When creating object wrapped by `std::reference_wrapper`, it can't be anonymous object (because then reference would be left dangling)
     3. If we want to get object back from `std::reference_wrapper`, we use `get()` member function
 - Example usage: see `conspect/src/reference-wrapper.cpp`
+
+## Association
+- To qualify as an **association**, object must have the following relationship:
+    - The associated object (member) is otherwise unrelated to the object (class)
+    - The associated object (member) can belong to more than one object (class) at a time
+    - The associated object (member) does not have its existence managed by the object (class)
+    - The associated object (member) may or may not know about the existence of the object (class) - the relationship can bi uni- or bidirectional
+- Association models as "*uses-a*" relationship (the doctor "uses" the patient (to earn income). The patient uses doctor (for health purposes))
+- Can be implemented in different ways, most often - using pointers, where the object points at the associated object. See `conspect/src/object-relations/association.cpp`
+- In general, we should avoid bidirectional associations if a unidirectional one will do.
+- **Reflexive association** - when objects have a relationship with other objects of the same type. E.g.: a university course and its prerequisites. The simplified case when Course can have only one prerequisite:
+
+`class Course {`
+
+`private: std::string m_name; const Course *m_prerequisite;`
+
+`public: `
+
+`Course(const std::string &name, const Course *prerequisite = nullptr): m_name{ name }, m_prerequisite{ prerequisite } {}` 
+
+`};`
+
+This can lead to a chain of associations (where Course's prerequisite also needs a prerequisite etc)
+- Associations can be indirect - instead of using pointers or references to directly link objects together, we could, for example, use ids. E.g.: see `conspect/src/object-relations/indirect-association.cpp`
+
+## Summary table for object composition and association
+- See `conspect/text/object-relations/object-relations-table.md`
