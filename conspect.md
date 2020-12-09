@@ -1833,3 +1833,37 @@ This can lead to a chain of associations (where Course's prerequisite also needs
 
 For reasoning, see `conspect/text/container-classes/list-constructor-important-nuances.md`
 - **Rule**: If you provide list construction, it’s a good idea to provide list assignment as well.
+
+# Inheritance
+- Models "*is-a*" relationship between two objects
+- **Hierarchy** is a diagram that shows how various objects are related
+- Class being inherited from - **parent class**, **base class**, or **superclass**
+- Class doing the inheriting - **child class**, **derived class**, or **subclass**
+- A child class inherits both behaviors (member functions) and properties (member variables) from the parent (subject to some access restrictions). These variables and functions become members of the derived class
+- To have one class inherit the other: `class Employee : public Person { ... };` - public inheritance
+- We can chain inheritance: `class Supervisor : public Employee { ... };`
+- C++ constructs derived classes in phases, starting with the most-base class (e.g. `Person`) and finishing with the most-child class (e.g. `Supervisor`) - that's all if we are creating a `Supervisor` object
+- Considering we have two classes: `Base` and `Derived` (which inherits from `Base`). We can consider `Derived` as a two part class: one part Derived, one part Base
+- What happens when `Derived` is instantiated (`Derived derived{ 1.3 };`):
+    1. Memory for derived is set aside (enough for both the Base and Derived portions)
+    2. The appropriate Derived constructor is called
+    3. The Base object is constructed first using the appropriate Base constructor. If no base constructor is specified, the default constructor will be used.
+    4. The initialization list initializes variables
+    5. The body of the constructor executes
+    6. Control is returned to the caller
+- You can't initialize inherited member vars in initialization list of a constructor. It works like that to restrict potential initialization of const and ref vars of base class in derived class (their value must be set when they are created - in the base class)
+- We can choose which `Base` class constructor will be called from the `Derived` class:
+
+`Derived(double cost = 0.0, int id = 0): Base{ id }, m_cost{ cost } {}` - call `Base(int)` constructor with value *id*
+
+Now if we call `Derived derived{ 1.3, 5 };`, the following will happen:
+1. Memory for derived is allocated.
+2. The Derived(double, int) constructor is called, where cost = 1.3, and id = 5
+3. The compiler looks to see if we’ve asked for a particular Base class constructor. We have! So it calls Base(int) with id = 5.
+4. The base class constructor initialization list sets m_id to 5
+5. The base class constructor body executes, which does nothing
+6. The base class constructor returns
+7. The derived class constructor initialization list sets m_cost to 1.3
+8. The derived class constructor body executes, which does nothing
+9. The derived class constructor returns
+- Destructors are called in *reverse* order of construction
