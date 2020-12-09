@@ -1867,3 +1867,21 @@ Now if we call `Derived derived{ 1.3, 5 };`, the following will happen:
 8. The derived class constructor body executes, which does nothing
 9. The derived class constructor returns
 - Destructors are called in *reverse* order of construction
+
+## Inheritance and access specifiers
+- **Private** members: can be accessed by members of the same class or friends
+- **Protected** members: can be accessed by members of the same class, friends and derived classes
+- **Public** members: can be accessed by anybody
+- When to use `protected`: when I am going to be the one deriving from my own classes, and the number of derived classes is reasonable. That way, if I make a change to the implementation of the base class, the updated to the derived classes can be made by myself and quickly
+- We can inherit from classes in three ways:
+    1. Publicly - `class Pub: public Base`
+    2. Protectedly - `class Pro: public Base`
+    3. Privately - `class Pri: public Base` or `class Def: Base` (defaults to private)
+- When members are inherited, the access specifier for an inherited member may be changed (in the derived class only) depending on the type of inheritance used (members that were `public` or `protected` in base class may change access specifiers in derived class)
+- See inheritance access table: `conspect/text/inheritance/inheritance-access-table.md`. Keep in mind the following rules:
+    - A class can always access its own (non-inherited) members
+    - The public accesses the members of a class based on the access specifiers of the class it is accessing
+    - A derived class accesses inherited members based on the access specifier inherited from the parent class. This varies depending on the access specifier and type of inheritance used
+- Public inheritance is the most commonly used
+- Private inheritance can be useful when the derived class has no obvious relationship to the base class, but uses the base class for implementation internally. In such case, we probably don't want the public interface of the base class to be exposed through objects of the derived class
+- Example of how access specifiers work in inheritance: see `conspect/src/inheritance/access-specifiers.cpp`
