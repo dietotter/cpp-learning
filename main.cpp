@@ -1,77 +1,119 @@
+#include "Creature.h"
+#include "Player.h"
+#include "Monster.h"
+#include "myrandom.h"
+
 #include <iostream>
 #include <string>
+#include <random>
 
-class Fruit
+bool attackMonster(Player &p, Monster &m)
 {
-private:
-    std::string m_name;
-    std::string m_color;
+    m.reduceHealth(p.damage());
 
-public:
-    Fruit(const std::string &name, const std::string &color)
-        : m_name{ name }, m_color{ color }
+    std::cout << "You hit the " << m.name() << " for " << p.damage() << " damage.\n";
+
+    if (m.isDead())
     {
+        p.levelUp();
+        p.addGold(m.gold());
+
+        std::cout << "You killed the " << m.name() << ".\n";
+        std::cout << "You are now level " << p.level() << ".\n";
+        std::cout << "You found " << m.gold() << " gold.\n";
+
+        return true;
     }
 
-    const std::string& getName() const
-    {
-        return m_name;
-    }
-
-    const std::string& getColor() const
-    {
-        return m_color;
-    }
-};
-
-class Apple : public Fruit
-{
-private:
-    double m_fiber;
-
-public:
-    Apple(const std::string &name, const std::string &color, double fiber)
-        : Fruit{ name, color },
-            m_fiber{ fiber }
-    {
-    }
-
-    double getFiber() const
-    {
-        return m_fiber;
-    }
-};
-
-std::ostream& operator<<(std::ostream &out, const Apple &apple)
-{
-    out << "Apple(" << apple.getName() << ", " << apple.getColor() << ", " << apple.getFiber() << ')';
-
-    return out;
+    return false;
 }
 
-class Banana : public Fruit
+bool attackPlayer(Player &p, const Monster &m)
 {
-public:
-    Banana(const std::string &name, const std::string &color)
-        : Fruit{ name, color }
+    p.reduceHealth(m.damage());
+
+    std::cout << "The " << m.name() << " hit you for " << m.damage() << " damage.\n";
+
+    if (p.isDead())
     {
+        std::cout << "You dies at level " << p.level() << " and with " << p.gold() << " gold.\n";
+        std::cout << "Too bad you SUCK and NO GOLD FOR YOUR DEAD ASS!\n";
+
+        return false;
     }
-};
 
-std::ostream& operator<<(std::ostream &out, const Banana &banana)
+    return true;
+}
+
+bool fightMonster(Player &p)
 {
-    out << "Banana(" << banana.getName() << ", " << banana.getColor() << ')';
+    Monster m{ Monster::getRandomMonster() };
 
-    return out;
+    std::cout << "You have encountered a " << m.name() << " (" << m.symbol() << ").\n";
+
+	static std::uniform_int_distribution runDie{ 0, 1 };
+
+    while (true)
+    {
+        char playersChoice{};
+        std::cout << "(R)un or (F)ight: ";
+        std::cin >> playersChoice;
+
+        bool ableToRun{};
+        switch(playersChoice)
+        {
+            case 'R':
+            case 'r':
+                ableToRun = static_cast<bool>(runDie( myrandom::mt ));
+                
+                if (ableToRun)
+                {
+                    std::cout << "You successfully fled.\n";
+                    return true;
+                }
+
+                std::cout << "You failed to flee.\n";
+
+                if (!attackPlayer(p, m))
+                {
+                    return false;
+                }
+
+                break;
+            case 'F':
+            case 'f':
+            default:
+                if (attackMonster(p, m))
+                {
+                    return true;
+                }
+
+                break;
+        }
+    }
 }
 
 int main()
 {
-	const Apple a{ "Red delicious", "red", 4.2 };
-	std::cout << a << '\n';
- 
-	const Banana b{ "Cavendish", "yellow" };
-	std::cout << b << '\n';
- 
+    std::string name{};
+    std::cout << "Enter your name: ";
+    std::cin >> name;
+
+    Player p{ name };
+    std::cout << "Welcome, " << p.name() << ".\n";
+
+    while (!p.hasWon())
+    {
+        if (!fightMonster(p))
+        {
+            break;
+        }
+    }
+    
+    if (p.hasWon())
+    {
+        std::cout << "Nice, you won with " << p.gold() << " to spend on onlyfans you LOSER!\n";
+    }
+
 	return 0;
 }

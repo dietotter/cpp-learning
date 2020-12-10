@@ -1,5 +1,6 @@
 # Some terminology
 - Yield - отдавать/выдавать. Пример: Taking the address of a pointer yields the memory address of the pointer variable - Если мы возьмем адрес у указателя (имеется ввиду с помощью &), нам выдас адрес переменной, которая хранит этот указатель.
+- Ambiguity - двусмысленность
 
 # Data
 - Data is any information, that can be processed, stored and moved by computer.
@@ -1885,3 +1886,60 @@ Now if we call `Derived derived{ 1.3, 5 };`, the following will happen:
 - Public inheritance is the most commonly used
 - Private inheritance can be useful when the derived class has no obvious relationship to the base class, but uses the base class for implementation internally. In such case, we probably don't want the public interface of the base class to be exposed through objects of the derived class
 - Example of how access specifiers work in inheritance: see `conspect/src/inheritance/access-specifiers.cpp`
+
+## New functionality in derived classes
+- When member function is called with a derived class object, compiler first looks to see if that member exists in the derived class. If not - it walks up the inheritance chain to the base class. It uses the first one it finds
+- We can redefine the function in derived classes. We can also change the access specifier when redefining (e.g. in `Base` function is `private`, but in `Derived` we can make it `public`)
+- We can use the base function (from `class Base`) in the redefined one: (in `class Derived`)
+
+`void identify() { Base::identify(); std::cout << "I am Derived"; }`
+- If we want to use the base friend functions, we need to use `static_cast`. E.g.:
+
+`friend std::ostream& operator<< (std::ostream &out, const Derived &d) { out << "In Derived"; out << static_cast<Base>(d); return out; }`
+- We can just change the access specifier of base member in derived class (without redefining). This won't work though if the base class member is `private`. This is done through *using declaration*:
+
+`class Base { protected: void printValue() { ... } };`
+
+`class Derived : public Base { public: using Base::printValue; };`
+- We can hide the functionality of Base class in Derived by:
+    1. Making something `public` from Base `private` in Derived:
+
+        `class Base { public: int m_value; };`
+
+        `class Derived { private: using Base::m_value; };`
+    2. Marking member functions as deleted in the derived class:
+
+        `class Base { public: int getValue() { return m_value } };`
+        
+        `class Derived { public: int getValue() = delete; }`
+
+        *Note*: Derived object can still access the Base version of *getValue()* by upcasting to a Base first:
+
+        `std::cout << static_cast<Base>(derived).getValue();`
+
+## Multiple inheritance
+- **Multiple inheritance** enables a derived class to inherit members from more than one parent. E.g.:
+
+`class Teacher: public Person, public Employee { ... };`
+- Problems with multiple inheritance:
+    1. Multiple base classes can contain a function with the same name, which result in ambiguity. E.g.: `class USBDevice` and `class NetworkDevice` both have `getId()` function. `class WirelessAdapter` derives from both of them. If we create a WirelessAdapter object and try to call *getId()*, it will result in compile error:
+
+        `WirelessAdapter c54G(123, 456); std::cout << c54G.getId();`
+
+        We can work around this by specifying the version we want to call:
+
+        `std::cout << c54G.USBDevice::getId();`
+
+        But it still leads to complex code.
+    2. The diamond problem. It's when a class multiply inherits from two classes which each inherit from a single base class. E.g.:
+
+        `class PoweredDevice {};`
+
+        `class Scanner: public PoweredDevice {};`
+
+        `class Printer: public PoweredDevice {};`
+        
+        `class Copier: public Scanner, public Printer {};`
+
+        Many issues with this, like whether `Copier` should have one or two copies of `PoweredDevice`, and how to resolve certain types of ambigous references. While most of these issues can be addressed through explicit scoping, the maintenance overhead is huge.
+- **Rule**: Avoid multiple inheritance unless alternatives lead to more complexity.
