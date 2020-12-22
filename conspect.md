@@ -1972,3 +1972,19 @@ Now if we call `Derived derived{ 1.3, 5 };`, the following will happen:
 `Derived derived{ 5 }; Base &rBase{ derived }; Base *pBase{ &derived };`
 
 - However, because *rBase* and *pBase* can obly see members of Base (or any classes that Base inherited). So even though `Derived::printName() { std::cout << "derived"; }` may shadow (hide) `Base::printName() { std::cout << "base"; }`, if we call *printName()* on *rBase* or *pBase*, `Base::printName()` will be called, printing out "base".
+
+## Virtual functions
+- **Virtual function** is a special type of function that, when called, resolves to the most-derived version of the function that exists between the base and derived class. This capability is known as **polymorphism**.
+- A derived function is considered a match if it has the same signature (name, parameter types, and whether it is const) and return type as the base version of the function. Such functions are called **overrides**.
+- To make a function *virtual*, we use `virtual` keyword:
+
+`virtual std::string_view getName() const { return "Base"; }`
+
+`virtual std::string_view getName() const { return "Derived"; }`
+
+Now if we call `rBase.getName()` or `pBase->getName()`, they will return "Derived".
+- If a function is marked as virtual, all matching overrides are also considered virtual, even if they are not explicitly marked as such. But it's a good idea to use the virtual keyword for them still - just as a reminder that they are virtualized. One example: see `conspect/src/virtual-functions/virtualized-derived-functions.cpp`
+- We shouldn't call virtual functions from constructors or destructors because of the order in which inherited/inheriting classes are created/destroyed.
+- Downsides:
+    - Virtual functions are inefficient - resolving a virtual function call takes longer than resolving a regular one.
+    - The compiler has to allocate an extra pointer for each class object that has one or more virtual functions
