@@ -422,6 +422,10 @@ Its accessible in the entire if-statement (e.g. in `else{...}` too)
 - `std::exit()` is called implicitly when `main()` function ends. We can call it explicitly too, including it from `<cstdlib>` header.
 - `std::exit()` function does not clean up local variables in the current function or up the call stack. Because of this, we should avoid calling `std::exit()` explicitly. Because it exits immediately, we need to do some cleanup ourselves (for example, in some `cleanup()` function). To assist with this, C++ offers `std::atexit(cleanup_function_name)` function, which allows to specify which function will be called on program termination via `std::exit()`. The function being registered must take no parameters and have no return value. We can register multiple cleanup functions, they will be called in reverse order of registration.
 - In multithreaded programs `std::exit()` can cause the app to crash, because it cleans up static objects, which may be used by other threads. For this reason, C++ offers another functions: `std::quick_exit()` and `std::at_quick_exit()`. *quick_exit* does not clean up static objects, and may or may not do other types of clean up.
+- **Abnormal termination** means the program had some kind of unusual runtime error and it couldn't continue to run (e.g., trying to divide by 0)
+- `std::abort()` causes program to terminate abnormally
+- `std::terminate()` is typically used with exceptions. It's most often called implicitly when an exception isn't handled (and in some other exception-related cases). By default, *std::terminate()* calls *std::abort()*.
+- **Rule**: Only use a *halt* when there is no safe way to return nrmally from the main function. If exceptions aren't disabled, use them.
 
 # Random number generation
 - To produce random results, **pseudo-random number generators** (**PRNG**) should be **seeded** only once
@@ -1893,8 +1897,8 @@ Now if we call `Derived derived{ 1.3, 5 };`, the following will happen:
 - When to use `protected`: when I am going to be the one deriving from my own classes, and the number of derived classes is reasonable. That way, if I make a change to the implementation of the base class, the updated to the derived classes can be made by myself and quickly
 - We can inherit from classes in three ways:
     1. Publicly - `class Pub: public Base`
-    2. Protectedly - `class Pro: public Base`
-    3. Privately - `class Pri: public Base` or `class Def: Base` (defaults to private)
+    2. Protectedly - `class Pro: protected Base`
+    3. Privately - `class Pri: private Base` or `class Def: Base` (defaults to private)
 - When members are inherited, the access specifier for an inherited member may be changed (in the derived class only) depending on the type of inheritance used (members that were `public` or `protected` in base class may change access specifiers in derived class)
 - See inheritance access table: `conspect/text/inheritance/inheritance-access-table.md`. Keep in mind the following rules:
     - A class can always access its own (non-inherited) members
@@ -1960,3 +1964,11 @@ Now if we call `Derived derived{ 1.3, 5 };`, the following will happen:
 
         Many issues with this, like whether `Copier` should have one or two copies of `PoweredDevice`, and how to resolve certain types of ambigous references. While most of these issues can be addressed through explicit scoping, the maintenance overhead is huge.
 - **Rule**: Avoid multiple inheritance unless alternatives lead to more complexity.
+
+# Virtual functions
+## Pointers and references to the base class of derived objects
+- Since `Derived` has a `Base` part in it, we can set a `Base` pointer or reference to a `Derived` object:
+
+`Derived derived{ 5 }; Base &rBase{ derived }; Base *pBase{ &derived };`
+
+- However, because *rBase* and *pBase* can obly see members of Base (or any classes that Base inherited). So even though `Derived::printName() { std::cout << "derived"; }` may shadow (hide) `Base::printName() { std::cout << "base"; }`, if we call *printName()* on *rBase* or *pBase*, `Base::printName()` will be called, printing out "base".
