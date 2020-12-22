@@ -394,6 +394,15 @@ Its accessible in the entire if-statement (e.g. in `else{...}` too)
 ## Switch
 - The expression in `switch(...)` should evaluate to integral type
 - Switch variable declaration nuances: see `conspect/src/switch.cpp`
+- **Fallthrough** - when execution flows from a statement underneath some case to statements of some other cases (because of abscence of *break* or *return*). Because it is rarely wanted, compiler may flag it as warning. From C++17, we can use `[[fallthrough]]` with null statement to let compiler know that overflow (fallthrough) is intentional:
+
+`case 1:`
+
+`std::cout << 1 << '\n';`
+
+`[[fallthrough]];`
+
+`case 2: ...`
 
 ## Goto
 - *Goto statements* have **function scope** - they and the corresponding *statement labels* should appear in the same function
@@ -405,6 +414,14 @@ Its accessible in the entire if-statement (e.g. in `else{...}` too)
 
 ## For loops
 - Variables in for loops have **loop scope** - they exist only within the loop
+
+## Halts
+- **Halt** is a flow control statement that terminates the program. In C++, they are implemented as functions (not keywords), so halt statements = function calls.
+- **Normal termination** - the program has exited in an *expected* way (doesn't imply that the program was *successful* - status code is used for that).
+- `std::exit()` is a function that causes the program to terminate normally. It performs some cleanups: First, objects with statuc storage duration are destroyed. Then some other miscellaneous file cleanup is done if any files were used. Finally, controll is returned to the OS, with the argument passed to *std::exit()* used as status code.
+- `std::exit()` is called implicitly when `main()` function ends. We can call it explicitly too, including it from `<cstdlib>` header.
+- `std::exit()` function does not clean up local variables in the current function or up the call stack. Because of this, we should avoid calling `std::exit()` explicitly. Because it exits immediately, we need to do some cleanup ourselves (for example, in some `cleanup()` function). To assist with this, C++ offers `std::atexit(cleanup_function_name)` function, which allows to specify which function will be called on program termination via `std::exit()`. The function being registered must take no parameters and have no return value. We can register multiple cleanup functions, they will be called in reverse order of registration.
+- In multithreaded programs `std::exit()` can cause the app to crash, because it cleans up static objects, which may be used by other threads. For this reason, C++ offers another functions: `std::quick_exit()` and `std::at_quick_exit()`. *quick_exit* does not clean up static objects, and may or may not do other types of clean up.
 
 # Random number generation
 - To produce random results, **pseudo-random number generators** (**PRNG**) should be **seeded** only once
