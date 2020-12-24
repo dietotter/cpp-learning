@@ -1988,3 +1988,63 @@ Now if we call `rBase.getName()` or `pBase->getName()`, they will return "Derive
 - Downsides:
     - Virtual functions are inefficient - resolving a virtual function call takes longer than resolving a regular one.
     - The compiler has to allocate an extra pointer for each class object that has one or more virtual functions
+
+## The override and final specifiers, and covariant return types
+- For cases when function was meant to be an override, but isn't (example 1 below), C++11 introduces `override` specifier (not keyword) (example 2 below):
+
+Example 1:
+
+`class A { public: virtual const char* getName1(int x) { return "A"; } };`
+
+`class B : public A { public: virtual const char* getName1(int x) const { return "B"; } };` - isn't an override because the constness is different
+
+Example 2 (in class B):
+
+`virtual const char* getName1(int x) const override { return "B"; }` - compile error, function is not an override
+
+`virtual const char* getName3(int x) override { return "B"; }` - okay, function is an override of `A::getName1(int)`
+
+If the function does not override a base class function (or is applied to a non-virtual function), the compiler will flag the function as an error. This is useful in complex programs, where such things as mismatched virtual functions are difficult to debug.
+- There is no performance penalty for using the *override* specifier
+- **Rule**: Apply the override specifier to every intended override function I write
+- If we want to restrict user from overriding a function, or inherit from a class, we can use `final` specifier (not keyword). If the user tries to override a function or inherit from a class that has been specified as final - compile error. Example:
+
+`class A { public: virtual const char* getName() { return "A"; } };`
+
+`class B : public A { public: virtual const char* getName() override final { return "B"; } };`
+
+`class C : public B { public: virtual const char* getName() override { return "C"; } };` - compile error; overrides `B:getName()`, which is *final*
+
+- In case where we want to prevent inheriting from a class:
+
+`class A { ... };`
+
+`class B final : public A { ... };`
+
+`class C : public B { ... };` - compile error, cannot inherit from final class
+- Special case when a derived class virtual function can have a different return type than the base class and still be an override: If the return type of a virtual functions is a pointer or a reference to a class, override functions can return a pointer or a reference to a derived class. These are called **covariant return types**. Example:
+
+`virtual Base* getThis() { return this; }` (in class `Base`)
+
+`Derived* getThis() override { return this; }` (in class `Derived`) - overrides the Base's `getThis()`
+
+`int main() { Derived d{}; Base *b{ &d }; d.getThis();` - returns a `Derived*`
+
+`b->getThis();` - returns a `Base*`
+
+` return 0; }`
+
+One interesting note about covariant return types: C++ can’t dynamically select types, so you’ll always get the type that matches the base version of the function being called. In other words, in the above example, you only get a Derived* if you call getThis() with an object that is typed as a Derived object in the first place.
+- Some older compilers (e.g. Visual Studio 6) do not support covariant return types
+
+## Virtual destructors, virtual assignment, and overriding virtualization
+- **Rule**: If providing own destructor, we should **always** make it virtual if dealing with inheritance. E.g. our derived class has some memory allocation, and it gets deallocated in destructor.
+
+`Derived *derived{ new Derived(5) }; Base *base{ derived }; delete base;` - if destructor isn't virtual, only Base destructor will be called, thus some memory inside `base` object won't be deallocated. (full example: see `conspect/src/virtual-functions/virtual-destructor.cpp`)
+- It is possible to make the assignment operator virtual. However, virtualizing the ass op opens up some advanced stuff - so maybe should read up on this later, if needed.
+- We can ignore virtualization using scope resolution operator:
+
+`Derived derived; const Base &base{ derived }; std::cout << base.Base::getName();`
+- Recommendations about virtual destructors and inheritance:
+    - If you intend your class to be inherited from, make sure your destructor is virtual.
+    - If you do not intend your class to be inherited from, mark your class as final. This will prevent other classes from inheriting from it in the first place, without imposing any other use restrictions on the class itself.
