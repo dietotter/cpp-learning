@@ -1,6 +1,8 @@
 # Some terminology
 - Yield - отдавать/выдавать. Пример: Taking the address of a pointer yields the memory address of the pointer variable - Если мы возьмем адрес у указателя (имеется ввиду с помощью &), нам выдас адрес переменной, которая хранит этот указатель.
 - Ambiguity - двусмысленность
+- Contrived - надуманный
+- Leverage - использовать
 
 # Data
 - Data is any information, that can be processed, stored and moved by computer.
@@ -2100,4 +2102,74 @@ The function is still pure virtual, even though it has a body. This can be usefu
     2. **Note for example**: *Scanner* and *Printer* constructors still have calls to the *PoweredDevice* constructor. When creating an instance of *Copier*, these constructor calls are simply ignored because *Copier* is responsible for creating the *PoweredDevice*. However, if we were to create an instance of *Scanner* or *Printer*, those constructor calls would be used, and normal inheritance rules apply.
     3. If a class inherits one or more classes that have virtual parents, the most derived class is responsible for constructing the virtual base class. This is true even in a single inheritance case.
     4. All classes inheriting a virtual base class will have a virtual table, even if they would normally not have one otherwise, and thus be larger by a pointer
-    5. **Another note for example**: Because *Scanner* and *Printer* derive virtually from *PoweredDevice*, *Copier* will only be one PoweredDevice subobject. Scanner and Printer both need to know how to find that single PoweredDevice subobject, so they can access its members (because after all, they are derived from it). This is typically done through some virtual table magic (which essentially stores the offset from each subclass to the PoweredDevice subobject)
+    5. **Another note for example**: Because *Scanner* and *Printer* derive virtually from *PoweredDevice*, *Copier* will only be one *PoweredDevice* subobject. *Scanner* and *Printer* both need to know how to find that single *PoweredDevice* subobject, so they can access its members (because after all, they are derived from it). This is typically done through some virtual table magic (which essentially stores the offset from each subclass to the PoweredDevice subobject)
+
+## Object slicing
+- (for `Base`/`Derived` example) - instead of setting a Base reference or pointer to a Derived object (like in **Pointers and references to the base class of derived objects** section above), we can simply assign a Derived object to a Base object:
+
+`Derived derived{ 5 }; Base base{ derived };`
+- When we do it, only the Base portion of the Derived object is copied, the Derived portion is not. This is called **object slicing** (or *slicing*)
+- Slicing can be dangerous in some cases:
+    - Used accidentally with functions:
+    
+            void printName(const Base base) { std::cout << base.getName(); }
+            int main() { Derived d{ 5 }; printName(d); }
+
+        The Derived part of `d` is sliced off, so printName will always print 'Base' (even if `getName()` is virtual)
+
+        Fix: `void printName(const Base &base) { ... }`
+    - Slicing vectors. The same problem will occur in the following code:
+    
+            std::vector<Base> v{};
+            v.push_back(Base{ 5 });
+            v.push_back(Derived{ 6 });
+
+        Fix:
+
+            std::vector<Base*> v{};
+	
+            Base b{ 5 };
+            Derived d{ 6 };
+        
+            v.push_back(&b);
+            v.push_back(&d);
+
+        Also, in this fix, `nullptr` becomes a valid option (desired or not)
+
+        *? using reference wrappers is also a fix ?*
+        
+    - The Frankenobject
+
+            Derived d1{ 5 };
+            Derived d2{ 6 };
+            Base &b{ d2 };
+            b = d1; // this line is problematic
+        
+        Because `b` is a Base, and the *operator=* provided to class by default isn't virtual, only the Base portion of `d1` is copied into `d2`. So `d2` now has the Base portion of `d1` and Derived portion of `d2`.
+
+        Also, see `tests/virtual-functions/without-using-virtual-functions.cpp` - there is some code to prevent object slicing
+- We should try to avoid slicing and use references (or pointers) wherever we can
+
+## Dynamic casting
+- It's possible to implicitly convert Derived pointer into a Base pointer (process is called **upcasting**)
+- C++ provides casting operator `dynamic_cast`. Dynamic casts have a few different capabilities, but the most common use is for converting base-class pointers into derived-class pointers (process is called **downcasting**)
+- Using `dynamic_cast` example: see `conspect/src/virtual-functions/dynamic-casting.cpp`
+- **Rule**: Always ensure your dynamic casts actually succeeded by checking for a null pointer result. (explanation - in previous line's example)
+- Because `dynamic_cast` does some consistency checking at runtime (to ensure the conversion can be made), use of dynamic_cast incurs a performance penalty
+- Cases where downcasting using dynamic_cast will not work:
+    1. With protected or private inheritance
+    2. For classes that do not declare or inherit any virtual functions (and thus don't have a virtual table)
+    3. In certain cases involving virtual base classes (see [this page](https://docs.microsoft.com/en-us/cpp/cpp/dynamic-cast-operator?redirectedfrom=MSDN&view=msvc-160) for some examples and how to resolve them)
+- We can downcast using `static_cast`. Because `static_cast` does no runtime type checking, it's faster, but more dangerous, because a conversion of Base* to Derived* will succeed. This will result in undefined behaviour when trying to acces the resulting Derived pointer (that is actually pointing to a Base object)
+- `dynamic_cast` can be used with references: see `conspect/src/virtual-functions/dynamic-casting-references.cpp`. Because there is no such thing as "null reference" in C++, if dynamic_cast of a reference fails, an exception of type `std::bad_cast` is thrown.
+- Use `static_cast` unless downcasting, in which case it's better to use `dynamic_cast`. In general, it's better to avoid casting and just use virtual functions
+- Downcasting may be preferred over virtual functions in some cases:
+    - When you can not modify the base class to add a virtual function (e.g. because the base class is part of the standard library)
+    - When you need access to something that is derived-class specific (e.g. an access function that only exists in the derived class)
+    - When adding a virtual function to your base class doesn’t make sense (e.g. there is no appropriate value for the base class to return). Using a pure virtual function may be an option here if you don’t need to instantiate the base class
+
+### dynamic_cast and RTTI
+- **Run-time type information** (**RTTI**) is a feature of C++ that exposes information about an object’s data type at runtime. This capability is leveraged by dynamic_cast. Because RTTI has a pretty significant space performance cost, some compilers allow to turn RTTI off as an optimization. If we do this, dynamic_cast won’t function correctly.
+
+## Printing inherited classes using operator<<
+- See how to print: `conspect/src/virtual-functions/printing-inherited-classes.cpp` ([explanation](https://www.learncpp.com/cpp-tutorial/printing-inherited-classes-using-operator/))
