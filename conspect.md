@@ -2056,3 +2056,48 @@ One interesting note about covariant return types: C++ can’t dynamically selec
 - **Early binding** (or *static binding*) means the compiler (or linker) is able to directly associate the identifier name (function or variable name) with a machine address. Direct function calls are resolved as early binding. When compiler/linker encounters a function call, it replaces it with machine language instruction that tells CPU to jump to that function's address
 - **Late binding** (or *dynamic binding*) is when it's not possible to know which function will be called until runtime (e.g., function pointers, which then are called via indirect function calls)
 - Late binding is slightly less efficient, because the program has to read the address held in pointer first and then jump to that address, but also more flexible
+
+### The virtual table
+- **Virtual table** (*vtable*) is a lookup table of functions used to resolve function calls in a dynamic/late binding manner
+- [Full explanation](https://www.learncpp.com/cpp-tutorial/the-virtual-table/) on how virtual functions are implemented
+- Performance costs:
+    - Any class that uses virtual functions has a `*__vptr`, and thus each object of that class will be bigger by one pointer
+    - For virtual functions, we have to do 3 operations to find the function to call, as opposed to 2 operations for a normal indirect function call, or one operation for a direct function call
+
+## Pure virtual functions, abstract base classes, interface classes
+- **Pure virtual function** (or **abstract function**) - has no body at all, acts as placeholder that is meant to be redefined by derived classes. Example:
+
+`class Base { public: virtual int getValue() const = 0; };`
+- Consequences of using pure virtual function:
+    - Any class with one or more pure virtual functions becomes an **abstract base class**, which means that it can not be instantiated
+    - Any derived class must define a body for this function, or that derived class will be considered an abstract base class as well
+- For example, see `conspect/src/virtual-functions/pure-virtual-functions.cpp`
+- Pure virtual function can have a body:
+
+`class Animal { public: virtual const char* speak() const = 0; };`
+
+`const char* Animal::speak() const { return "buzz"; }`
+
+The function is still pure virtual, even though it has a body. This can be useful if the derived class is fine with default implementation, so we can override the function by simply calling the base class implementation directly:
+
+`class Dragonfly : public Animal { public: const char* speak() const override { return Animal::speak(); } };`
+- **Interface class** is a class that has no member variables, and where all of the functions are pure virtual. Useful when we want to define the functionality that derived classes must implement, but leave the implementation details entirely up to derived class.
+- Are often named beginning with an I: `class IErrorLog`. See full example: `conspect/src/virtual-functions/interfaces.cpp`
+- Abstract classes still have virtual tables. The virtual table entry for a pure virtual function will generally either contain a null pointer, or point to a generic function that prints an error (sometimes this function is named `__purecall`) if no override is provided.
+
+## Virtual base classes
+- If we have a diamond problem (see `conspect/images/diamond-problem.gif`):
+
+        class PoweredDevice{};
+        class Scanner: public PoweredDevice {};
+        class Printer: public PoweredDevice {};
+        class Copier: public Scanner, public Printer {};
+
+    We end up with two copies of the PoweredDevice class - one from `Printer`, one from `Scanner` (structure: see `conspect/images/diamond-problem-structure.gif`). While this is often desired, some times we may want to have only one copy of `PoweredDevice` to be shared by `Scanner` and `Printer`
+- To share a base class, simply insert the `virtual` keyword in the inheritance list of the derived class. This creates a **virtual base class**, which means there is only one base object. The base object is shared between all objects in the inheritance tree and it is only constructed once. Example: see `conspect/src/virtual-functions/virtual-base-class.cpp`. Because *Scanner* and *Printer* share a *PoweredDevice* base class, *Copier* constructor is responsible for creating *PoweredDevice*.
+- Notes on virtual base classes:
+    1. Virtual base classes are always created before non-virtual base classes
+    2. **Note for example**: *Scanner* and *Printer* constructors still have calls to the *PoweredDevice* constructor. When creating an instance of *Copier*, these constructor calls are simply ignored because *Copier* is responsible for creating the *PoweredDevice*. However, if we were to create an instance of *Scanner* or *Printer*, those constructor calls would be used, and normal inheritance rules apply.
+    3. If a class inherits one or more classes that have virtual parents, the most derived class is responsible for constructing the virtual base class. This is true even in a single inheritance case.
+    4. All classes inheriting a virtual base class will have a virtual table, even if they would normally not have one otherwise, and thus be larger by a pointer
+    5. **Another note for example**: Because *Scanner* and *Printer* derive virtually from *PoweredDevice*, *Copier* will only be one PoweredDevice subobject. Scanner and Printer both need to know how to find that single PoweredDevice subobject, so they can access its members (because after all, they are derived from it). This is typically done through some virtual table magic (which essentially stores the offset from each subclass to the PoweredDevice subobject)
