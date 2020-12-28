@@ -2048,3 +2048,11 @@ One interesting note about covariant return types: C++ can’t dynamically selec
 - Recommendations about virtual destructors and inheritance:
     - If you intend your class to be inherited from, make sure your destructor is virtual.
     - If you do not intend your class to be inherited from, mark your class as final. This will prevent other classes from inheriting from it in the first place, without imposing any other use restrictions on the class itself.
+
+(more detailed on the above recommendations: see `conspect/text/virtual-functions/making-destructors-virtual.md`)
+
+## Early and late binding
+- **Binding** refers to the process that is used to convert identifiers (such as variable and function names) into addresses
+- **Early binding** (or *static binding*) means the compiler (or linker) is able to directly associate the identifier name (function or variable name) with a machine address. Direct function calls are resolved as early binding. When compiler/linker encounters a function call, it replaces it with machine language instruction that tells CPU to jump to that function's address
+- **Late binding** (or *dynamic binding*) is when it's not possible to know which function will be called until runtime (e.g., function pointers, which then are called via indirect function calls)
+- Late binding is slightly less efficient, because the program has to read the address held in pointer first and then jump to that address, but also more flexible
