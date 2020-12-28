@@ -1,70 +1,46 @@
+#include "Point.h"
+#include "Circle.h"
+#include "Triangle.h"
+
+#include <vector>
 #include <iostream>
-#include <string_view>
-#include <string>
-#include <array>
- 
-class Animal
+
+int getLargestRadius(const std::vector<Shape*> &v)
 {
-protected:
-    std::string m_name;
-    std::string m_speak;
- 
-    // We're making this constructor protected because
-    // we don't want people creating Animal objects directly,
-    // but we still want derived classes to be able to use it.
-    Animal(std::string_view name, std::string_view speak)
-        : m_name{ name }, m_speak{ speak }
+    int largestRadius{ 0 };
+
+    for (const auto *shape : v)
     {
+        if (auto *circle{ dynamic_cast<const Circle*>(shape) })
+        {
+            largestRadius = largestRadius < circle->getRadius() ? circle->getRadius() : largestRadius;
+        }
     }
-    
-    // To prevent slicing (covered later)
-    Animal(const Animal&) = delete;
-    Animal& operator=(const Animal&) = delete;
- 
-public:
-    const std::string& getName() const { return m_name; }
-    std::string_view speak() const { return m_speak; }
-};
- 
-class Cat: public Animal
-{
-public:
-    Cat(std::string_view name)
-        : Animal{ name, "Meow" }
-    {
-    }
-};
- 
-class Dog: public Animal
-{
-public:
-    Dog(std::string_view name)
-        : Animal{ name, "Woof" }
-    {
-    }
-};
- 
+
+    return largestRadius;
+}
+
 int main()
 {
-    const Cat fred{ "Fred" };
-    const Cat misty{ "Misty" };
-    const Cat zeke{ "Zeke" };
- 
-    const Dog garbo{ "Garbo" };
-    const Dog pooky{ "Pooky" };
-    const Dog truffle{ "Truffle" };
- 
-    // Set up an array of pointers to animals, and set those pointers to our Cat and Dog objects
-    // from C++20
-    // const auto animals{ std::to_array<const Animal*>({ &fred, &garbo, &misty, &pooky, &truffle, &zeke }) };
-    
-    // Before C++20, with the array size being explicitly specified
-    const std::array<const Animal*, 6> animals{ &fred, &garbo, &misty, &pooky, &truffle, &zeke };
-    
-    for (const auto animal : animals)
+	std::vector<Shape*> v{
+        new Circle{Point{1, 2, 3}, 7},
+        new Triangle{Point{1, 2, 3}, Point{4, 5, 6}, Point{7, 8, 9}},
+        new Circle{Point{4, 5, 6}, 3}
+    };
+
+	// print each shape in vector v on its own line here
+    for (const auto *shape : v)
     {
-        std::cout << animal->getName() << " says " << animal->speak() << '\n';
+        std::cout << *shape << '\n';
     }
- 
-    return 0;
+
+    std::cout << "The largest radius is: " << getLargestRadius(v) << '\n';
+
+	// delete each element in the vector here
+    for (const auto *shape : v)
+    {
+        delete shape;
+    }
+
+	return 0;
 }
