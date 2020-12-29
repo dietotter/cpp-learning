@@ -2202,3 +2202,15 @@ The function is still pure virtual, even though it has a body. This can be usefu
 - Template classes are instanced the same way template functions are
 - Ideal for container classes. See `conspect/src/templates/Array.h`
 - If we decide to split member function definitions from template class definition (e.g. move `getLength()` from `conspect/src/templates/Array.h` to `Array.cpp`), then we'll get a linker error. Why this happens and how to work around it: see `conspect/text/templates/splitting-template-classes.md`
+
+## Template non-type parameters
+- **Template non-type parameter** is a special type of parameter that does not substitute for a type, but is instead replaced by a value. A non-type parameter can be any of the following:
+    - Value that has an integral type or enumeration
+    - Pointer or reference to a class object
+    - Ptr or ref to a function
+    - Ptr or ref to a class member function
+    - `std::nullptr_t`
+- E.g., usage in non-dynamic (static) array class: see `conspect/src/templates/StaticArray.h`
+
+## Function template specialization
+- We can implement a templated function slightly different for a specific data type. E.g., in `conspect/src/templates/function-template-specialization.cpp`, we use a **function template specialization** (sometimes called a *full* or *explicit func templ spec*) to create a specialized version of `print()` for type `double`, and specialized version of constructor and destructor for type `char*`
