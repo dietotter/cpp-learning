@@ -2214,7 +2214,11 @@ The function is still pure virtual, even though it has a body. This can be usefu
 
 ## Function template specialization
 - We can implement a templated function slightly different for a specific data type. E.g., in `conspect/src/templates/function-template-specialization.cpp`, we use a **function template specialization** (sometimes called a *full* or *explicit func templ spec*) to create a specialized version of `print()` for type `double`, and specialized version of constructor and destructor for type `char*`
+- In the above example, we can see, that we would need to create specialized versions of constructor and destructor for all pointer types (e.g. for deep copy). See how to handle this using partial template specialization in the corresponding part of `conspect/text/templates/partial-template-specialization.md`
 
 ## Class template specialization
 - **Class template specialization** allows us to specialize a template class for a particular data type (or data types, if there are multiple template parameters). E.g., we can make some storage class more efficient for booleans: see `conspect/src/templates/class-template-specialization.cpp`
 - Class template specializations are treated as completely independent classes, even though they are allocated in the same way as the templated class. This means that we can change anything and everything about our specialization class, including the way it’s implemented and even the functions it makes public, just as if it were an independent class. **Note**: Keeping the public interface between your template class and all of the specializations identical is generally a good idea, as it makes them easier to use
+
+## Partial template specialization
+- See `conspect/text/templates/partial-template-specialization.md`
