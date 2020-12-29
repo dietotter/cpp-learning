@@ -2201,4 +2201,4 @@ The function is still pure virtual, even though it has a body. This can be usefu
 ## Template classes
 - Template classes are instanced the same way template functions are
 - Ideal for container classes. See `conspect/src/templates/Array.h`
-- If we decide to split member function definitions from template class definition (e.g. move `getLength()` from `conspect/src/templates/Array.h` to `Array.cpp`), then we'll get a linker error. Why this happens and how to work around it: see `conspect/text/templates/splitting-template-classes
+- If we decide to split member function definitions from template class definition (e.g. move `getLength()` from `conspect/src/templates/Array.h` to `Array.cpp`), then we'll get a linker error. Why this happens and how to work around it: see `conspect/text/templates/splitting-template-classes.md`
