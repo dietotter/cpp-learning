@@ -111,4 +111,4 @@
     The correct workaround would be to use inheritance and a common base class: see `conspect/src/templates/partial-template-specialization-for-members.cpp`
 
 ## Partial template specialization for pointers
-- For pointer types (e.g. when we need to create specialized versions of constructor and destructor, e.g. for deep copy)
+- For pointer types (e.g. when we need to create specialized versions of constructor and destructor (e.g. for deep copy)), we can define special version of the class that works for pointer values. Example: `conspect/src/templates/partial-template-specialization-for-pointers.cpp`
