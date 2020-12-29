@@ -2185,3 +2185,20 @@ The function is still pure virtual, even though it has a body. This can be usefu
         {
             return (x > y) ? x : y;
         }
+- We can use both keywords `class` and `typename` for template parameter declaration - in this case, they mean the same
+- For multiple placeholder types: `template <typename T1, typename T2>`
+- Because the function argument passed in for type T could be a class type, and it’s generally not a good idea to pass classes by value, it would be better to make the parameters and return types of our templated function const references: `const T& max(const T &x, const T &y)`
+- Drawbacks:
+    - Some older compilers don't have very good template support
+    - Template functions produce hard-to-read error messages
+    - Template functions can increase compile time and code size, as single template mught be "realized" and recompiled in many files (there are ways to work arount this one)
+
+## Function template instances
+- C++ doesn't compile template functions directly, instead, at compile time, when compiler encounters a call to template function, it replicates the template function and replaces the template type params with actual types. That function is called **function template instance**
+- Compiler creates only one instance per unique set of params (per file). Also, if we create template function but do not call it, no template instances will be created.
+- When template instance is compiled, it is compiled like a normal function, so types used in these instances should have all the necessary operators or functions defined (e.g. user-defined class should have `operator>` overloaded for the above `max` function to work)
+
+## Template classes
+- Template classes are instanced the same way template functions are
+- Ideal for container classes. See `conspect/src/templates/Array.h`
+- If we decide to split member function definitions from template class definition (e.g. move `getLength()` from `conspect/src/templates/Array.h` to `Array.cpp`), then we'll get a linker error. Why this happens and how to work around it: see `conspect/text/templates/splitting-template-classes
