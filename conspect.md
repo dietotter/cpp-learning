@@ -2173,3 +2173,15 @@ The function is still pure virtual, even though it has a body. This can be usefu
 
 ## Printing inherited classes using operator<<
 - See how to print: `conspect/src/virtual-functions/printing-inherited-classes.cpp` ([explanation](https://www.learncpp.com/cpp-tutorial/printing-inherited-classes-using-operator/))
+
+# Templates
+## Function templates
+- **Function templates** are functions that serve as a pattern for creating other similar functions. We define the function using placeholder types, called **template type parameters**. When you call a template function, the compiler “stencils” out a copy of the template, replacing the placeholder types with the actual variable types from the parameters in your function call
+- The usual name for placeholder type - `T`
+- To say that this is template definition, and that `T` is a placeholder type, we use a **template parameter declaration**:
+
+        template <typename T> // this is the template parameter declaration
+        T max(T x, T y)
+        {
+            return (x > y) ? x : y;
+        }
