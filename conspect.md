@@ -2222,3 +2222,50 @@ The function is still pure virtual, even though it has a body. This can be usefu
 
 ## Partial template specialization
 - See `conspect/text/templates/partial-template-specialization.md`
+
+# Exceptions
+- Exception handling provides a mechanism to decouple handling of errors or other exceptional circumstances from the typical control flow of our code
+- Exceptions are implemented using 3 keywords: `throw`, `try`, `catch`
+- **Throw statement** is used to signal that an exception or error case has occurred (**raising** an exception). Usage: `throw` keyword, followed by a value of any data type you wish to use to signal that an error has occurred. Typically, this value will be an error code, a description of the problem, or a custom exception class:
+
+        throw -1; // throw a literal integer value
+        throw ENUM_INVALID_INDEX; // throw an enum value
+        throw "Can not take square root of negative number"; // throw a literal C-style (const char*) string
+        throw dX; // throw a double variable that was previously defined
+        throw MyException("Fatal Error"); // Throw an object of class MyException
+
+- Use `try` keyword to define a block of statements (**try block**) that acts as an observer, looking for any exceptions that are thrown by any of the statements within the try block:
+
+        try
+        {
+            // Statements that may throw exceptions you want to handle go here
+            throw -1; // here's a trivial throw statement
+        }
+
+- Use `catch` keyword to define a block of code (`catch block`) that handles exceptions for a single data type:
+
+        catch (int x)
+        {
+            // Handle an exception of type int here
+            std::cerr << "We caught an int exception with value" << x << '\n';
+        }
+
+- *Try block* must have at least one *catch block* immediately following it, but may have multiple *catch blocks* listed in sequence
+- Exceptions of fundamental types can be caught by value, but exceptions of non-fundamental types should be caught by const reference to avoid making an unnecessary copy
+- If the parameter is not going to be used in the catch block, the variable name can be omitted (this can help prevent compiler warnings about unused variables):
+
+        catch (double) // note: no variable name since we don't use it in the catch block below
+        {
+            // Handle exception of type double here
+            std::cerr << "We caught an exception of type double" << '\n';
+        }
+
+- **Recap**: When an exception is raised (using `throw`), execution of the program immediately jumps to the nearest enclosing `try` block (propagating up the stack if necessary to find an enclosing try block). If any of the `catch` handlers attached to the try block handle that type of exception, that handler is executed and the exception is considered handled.
+
+If no appropriate catch handlers exist, execution of the program propagates to the next enclosing try block. If no appropriate catch handlers can be found before the end of the program, the program will fail with an exception error
+- **Note**: The compiler will not perform implicit conversions or promotions when matching exceptions with catch blocks! For example, a char exception will not match with an int catch block. An int exception will not match a float catch block. However, casts from a derived class to one of its parent classes will be performed
+- What catch blocks typically do:
+    1. May print an error (either to the console, or a log file)
+    2. May return a value or error code back to the caller
+    3. May throw another exception. Because the catch block is outside of the try block, the newly thrown exception in this case is not handled by the preceding try block -- it’s handled by the next enclosing try block
+- Example of exception usage: see `conspect/src/exceptions/example-exception.cpp`
