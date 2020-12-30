@@ -2269,3 +2269,9 @@ If no appropriate catch handlers exist, execution of the program propagates to t
     2. May return a value or error code back to the caller
     3. May throw another exception. Because the catch block is outside of the try block, the newly thrown exception in this case is not handled by the preceding try block -- it’s handled by the next enclosing try block
 - Example of exception usage: see `conspect/src/exceptions/example-exception.cpp`
+
+## Stack unwinding
+- If exception is thrown in a function, and that function doesn't handle it, the function is terminated, and the program checks to see if the function's caller will handle the exception. If not, it terminates the caller and checks the caller's caller. And so on, until the handler is found, or until `main()` is terminated without exception being handled. This process is called **unwinding the stack**
+- Throw can be used outside of try/catch block (then the function will terminate and stack unwinding will begin, as described above)
+- Why it may be a good idea to pass errors back to the caller: see `conspect/text/exceptions/modularity-of-exceptions.md`
+- Example of stack unwinding: see `conspect/src/exceptions/stack-unwinding.cpp`
