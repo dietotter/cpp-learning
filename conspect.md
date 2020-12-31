@@ -2275,3 +2275,45 @@ If no appropriate catch handlers exist, execution of the program propagates to t
 - Throw can be used outside of try/catch block (then the function will terminate and stack unwinding will begin, as described above)
 - Why it may be a good idea to pass errors back to the caller: see `conspect/text/exceptions/modularity-of-exceptions.md`
 - Example of stack unwinding: see `conspect/src/exceptions/stack-unwinding.cpp`
+
+## Unhandled exceptions and catch-all handlers
+- When `main()` terminates with an unhandled exception, the OS generally notifies you that there is unhandled exception error (how - depends on the OS). Generally, we want to avoid this
+- Mechanism to catch all types of exceptions - **catch-all handler**. Works like a normal catch block, but uses the ellipsis operator (`...`) as a type to catch. Example:
+
+        int main()
+        {
+            try
+            {
+                throw 5; // throw an int exception
+            }
+            catch (double x)
+            {
+                std::cout << "We caught an exception of type double: " << x << '\n';
+            }
+            catch (...) // catch-all handler
+            {
+                std::cout << "We caught an exception of an undetermined type\n";
+            }
+        }
+
+- Catch-all handler should be placed last in the catch block chain
+- Often, the catch-all handler block is left empty:
+
+`catch(...) {} // ignore any unanticipated exceptions`
+- One use of catch-all handler is to wrap the contents of `main()`:
+
+        int main()
+        {
+        
+            try
+            {
+                runGame();
+            }
+            catch(...)
+            {
+                std::cerr << "Abnormal termination\n";
+            }
+        
+            saveState(); // Save user's game
+            return 1;
+        }
