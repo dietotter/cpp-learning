@@ -3,6 +3,7 @@
 - Ambiguity - двусмысленность
 - Contrived - надуманный
 - Leverage - использовать
+- Inherently - по своей сути
 
 # Data
 - Data is any information, that can be processed, stored and moved by computer.
@@ -2317,3 +2318,89 @@ If no appropriate catch handlers exist, execution of the program propagates to t
             saveState(); // Save user's game
             return 1;
         }
+
+## Exceptions, classes, inheritance
+### In members, overloaded operators, and constructors
+- Exceptions in overloaded operators:
+
+        int& IntArray::operator[](const int index)
+        {
+            if (index < 0 || index >= getLength())
+                throw index;
+        
+            return m_data[index];
+        }
+
+- Exceptions can be used in constructors if something goes wrong during object creation. In such case, the object's construction is aborted, and all class members (which have already been created and initialized) are destructed as per usual. However, because class's destructor is never called, we need to clean up prior to throwing the exception. Even better, because the members of the class are destructed as per usual, if we do resource allocations in the members themselves, then those members can clean up after themselves when destructed. This is part of the reason that RAII is advocated so highly. Example: see `conspect/src/exceptions/exceptions-in-constructor.cpp`
+
+### Exception classes
+- Throwing basic data types as exception types is vague
+- **Exception class** is just a normal class that is designed specifically to be thrown as an exception. Example of such class:
+
+        class ArrayException
+        {
+        private:
+            std::string m_error;
+        
+        public:
+            ArrayException(std::string error)
+                : m_error{error}
+            {
+            }
+        
+            const char* getError() const { return m_error.c_str(); }
+        };
+
+Now we can throw it:
+
+`throw ArrayException("Invalid index");`,
+
+and catch it: 
+
+`catch (const ArrayException &exception) { std::cerr << "An array exception occurred (" << exception.getError() << ")\n"; }`
+
+### Exceptions and inheritance
+- Exception handlers will not only match classes of a specific type, they’ll also match classes derived from that specific type. Example: see `conspect/src/exceptions/exceptions-inheritance.cpp`
+- **Rule**: Handlers for derived exception classes should be listed before those for base classes.
+
+### std::exception
+- Many of the classes and operators in the standard library throw exception classes on failure (e.g. `operator new` can throw `std::bad_alloc` if it is unable to allocate enough memory. Failed `dynamic_cast` will throw `std::bad_cast`). As of C++17, there are 25 different exception classes that can be thrown. They are all derived from `std::exception`
+- `std::exception` (from `#include <exception>`) has a virtual function `what()`, which provides a C-style string description of the exception
+- Some example of usage:
+
+        try
+        {
+            // code using standard library goes here
+        }
+        // This handler will catch std::length_error (and any exceptions derived from it) here
+        catch (const std::length_error &exception)
+        {
+            std::cerr << "You ran out of memory!" << '\n';
+        }
+        // This handler will catch std::exception (and any exception derived from it) that fall
+        // through here
+        catch (const std::exception &exception)
+        {
+            std::cerr << "Standard exception: " << exception.what() << '\n';
+        }
+- Nothing throws a `std::exception` directly, and neither should we. But we can throw other standard exception classes. `std::runtime_error` from `#include <stdexcept>` is a popular generic choice, with its constructor taking a customizable message:
+
+`throw std::runtime_error("Bad things happened");`
+- We can derive our own exception classes from `std::exception`:
+
+        class ArrayException : public std::exception
+        {
+        private:
+            std::string m_error{};
+        
+        public:
+            ArrayException(std::string_view error)
+                : m_error{error}
+            {
+            }
+        
+            // return the std::string as a const C-style string
+            const char* what() const noexcept override { return m_error.c_str(); }
+        };
+
+- In C++11, `what()` was updated to have specifier `noexcept` (which means the function promises not to throw exceptions itself). Therefore, in C++11 and beyond, our override should also have specifier `noexcept`
