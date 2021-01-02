@@ -2404,3 +2404,78 @@ and catch it:
         };
 
 - In C++11, `what()` was updated to have specifier `noexcept` (which means the function promises not to throw exceptions itself). Therefore, in C++11 and beyond, our override should also have specifier `noexcept`
+
+## Rethrowing exceptions
+- There may be cases where we can handle the exception and return reasonable value:
+
+        Database* createDatabase(std::string filename)
+        {
+            try
+            {
+                Database *d = new Database(filename);
+                d->open(); // assume this throws an int exception on failure
+                return d;
+            }
+            catch (int exception)
+            {
+                // Database creation failed
+                // Write an error to some global logfile
+                g_log.logError("Creation of Database failed");
+            }
+        
+            return nullptr;
+        }
+
+- If we can't handle exception reasonably in current function, we can throw another exception and it will be propagated up the stack:
+
+        int getIntValueFromDatabase(Database *d, std::string table, std::string key)
+        {
+            assert(d);
+        
+            try
+            {
+                return d->getIntValue(table, key); // throws int exception on failure
+            }
+            catch (int exception)
+            {
+                // Write an error to some global logfile
+                g_log.logError("doSomethingImportant failed");
+        
+                throw 'q'; // throw char exception 'q' up the stack to be handled by caller of getIntValueFromDatabase()
+            }
+        }
+
+- We can rethrow the same exception in wrong way:
+
+        int getIntValueFromDatabase(Database *d, std::string table, std::string key)
+        {
+            assert(d);
+        
+            try
+            {
+                return d->getIntValue(table, key); // throws Derived exception on failure
+            }
+            catch (Base &exception)
+            {
+                // Write an error to some global logfile
+                g_log.logError("doSomethingImportant failed");
+        
+                throw exception; // Danger: this throws a Base object, not a Derived object
+            }
+        }
+
+This can be bad in 2 ways:
+1. This throws a copy-initialized copy of the exception, not the exception itself. Compiler may elide the copy, but also it may not, so this could be less performant.
+2. (in the above example) `getIntValue()` throws `Derived` exception, but caught exception has type `Base`, so the thrown copy will also be `Base` - so `Derived` object has been sliced
+
+- We can rethrow the same exception in right way by just using the keyword `throw`:
+
+        catch (Base &exception)
+        {
+            g_log.logError("doSomethingImportant failed");
+
+            throw; // This won't slice Derived object
+        }
+
+**Rule**: When rethrowing the same exception, use the throw keyword by itself.
+
