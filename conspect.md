@@ -2479,3 +2479,6 @@ This can be bad in 2 ways:
 
 **Rule**: When rethrowing the same exception, use the throw keyword by itself.
 
+## Function try blocks
+- **Function try blocks** are designed to allow you to establish an exception handler around the body of an entire function, rather than around a block of code. Example: see `conspect/src/exceptions/function-try-block.cpp`
+- Unlike normal catch blocks (where you can resolve the exception), with function-level try blocks, you must throw or rethrow an exception. If we don't explicitly do any of this, exception will be implicitly rethrown
