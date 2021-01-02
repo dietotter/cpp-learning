@@ -4,6 +4,7 @@
 - Contrived - надуманный
 - Leverage - использовать
 - Inherently - по своей сути
+- Incur - нести за собой
 
 # Data
 - Data is any information, that can be processed, stored and moved by computer.
@@ -2482,3 +2483,81 @@ This can be bad in 2 ways:
 ## Function try blocks
 - **Function try blocks** are designed to allow you to establish an exception handler around the body of an entire function, rather than around a block of code. Example: see `conspect/src/exceptions/function-try-block.cpp`
 - Unlike normal catch blocks (where you can resolve the exception), with function-level try blocks, you must throw or rethrow an exception. If we don't explicitly do any of this, exception will be implicitly rethrown
+- Function try blocks can also be used with non-member functions, but they're almost exclusively used with constructors
+- Primarily are used for logging failures before passing exception up the stack, or for changing the type of exception thrown
+- Function try blocks can't be used to clean up resources of a class that failed to construct, but already allocated resources, because the object is "dead" before the catch block executes
+
+## Exception dangers and downsides
+- Cleaning up resources
+    1. We shouldn't forget to close files (and similar)
+
+            try
+            {
+                openFile(filename);
+                writeFile(filename, data);
+                closeFile(filename);
+            }
+            catch (const FileException &exception)
+            {
+                // Make sure file is closed
+                closeFile(filename);
+                // Then write error
+                std::cerr << "Failed to write to file: " << exception.what() << '\n';
+            }
+    
+    2. Working with dynamically allocated memory:
+
+            try
+            {
+                auto *john { new Person{ "John", 18, PERSON_MALE } };
+                processPerson(john);
+                delete john;
+            }
+            catch (const PersonException &exception)
+            {
+                std::cerr << "Failed to process person: " << exception.what() << '\n';
+            }
+
+        Here, we have two relatively easy ways to fix this:
+
+        1. Declare `john` outside the try block
+
+                Person *john{ nullptr };
+                try
+                {
+                    john = new Person("John", 18, PERSON_MALE);
+                    processPerson(john);
+                    delete john;
+                }
+                catch (const PersonException &exception)
+                {
+                    delete john;
+                    std::cerr << "Failed to process person: " << exception.what() << '\n';
+                }
+
+        2. Use local var of class that knows how to cleanup after itself when it goes out of scope ("smart pointer"). `std::unique_ptr` is a template class that holds a ptr, and deallocs it when it goes out of scope:
+
+                #include <memory> // for std::unique_ptr
+ 
+                try
+                {
+                    auto *john { new Person("John", 18, PERSON_MALE) };
+                    std::unique_ptr<Person> upJohn { john }; // upJohn now owns john
+                
+                    ProcessPerson(john);
+                
+                    // when upJohn goes out of scope, it will delete john
+                }
+                catch (const PersonException &exception)
+                {
+                    std::cerr << "Failed to process person: " << exception.what() << '\n';
+                }
+
+- Exception should never be thrown in destructors (explanation [here](https://www.learncpp.com/cpp-tutorial/exception-dangers-and-downsides/)). Write message to a log file instead
+- Exceptions have a small performance price. They increase the size of your executable, and they may also cause it to run slower due to additional checking that has to be performed. The main performance penalty is when exception is actually thrown (the stack must be unwound and appropriate handler found, which is relatively expensive)
+- Some modern computer architectures support zero-cost exceptions. They have no additional runtime cost in the non-error case (which is the case we most care about performance). However, they incur even larger penalty when an exception is found
+- We should use exceptions when all of the following is true:
+    1. The error being handled is likely to occur only infrequently.
+    2. The error is serious and execution could not continue otherwise.
+    3. The error cannot be handled at the place where it occurs.
+    4. There isn’t a good alternative way to return an error code back to the caller.
