@@ -5,6 +5,8 @@
 - Leverage - использовать
 - Inherently - по своей сути
 - Incur - нести за собой
+- Inadvertently - нечаянно
+- Retroactively - задним числом
 
 # Data
 - Data is any information, that can be processed, stored and moved by computer.
@@ -2561,3 +2563,74 @@ This can be bad in 2 ways:
     2. The error is serious and execution could not continue otherwise.
     3. The error cannot be handled at the place where it occurs.
     4. There isn’t a good alternative way to return an error code back to the caller.
+
+## Exception specifications and noexcept
+- In C++, all functions are classified as either **non-throwing** (do not throw exceptions) or **potentially throwing** (may throw an exception)
+- Looking at a typical function declaration, it is not possible to determine whether a function might throw an exception or not. **Exception specifications** are a language mechanism that was originally designed to document what kind of exceptions a function might throw as part of a function specification. Most of them are now deprecated or removed
+- The **noexcept specifier** defines a function as non-throwing:
+
+`void doSomething() noexcept;`
+
+`noexcept` doesn’t actually prevent the function from throwing exceptions or calling other functions that are potentially throwing. Rather, when an exception is thrown, if an exception exits a noexcept function, `std::terminate` will be called. **Note**: if `std::terminate` is called from inside a `noexcept` function, stack unwinding may or may not occur (depending on implementation and optimizations), which means your objects may or may not be destructed properly prior to termination
+- Much like functions that differ only in their return values can not be overloaded, functions differing only in their exception specification can not be overloaded
+- `noexcept` specifier has an optional `Boolean` parameter. `noexcept(true)` is equivalent to `noexcept`, meaning the function is non-throwing. `noexcept(false)` means the function is potentially throwing. These parameters are typically only used in template functions, so that a template function can be dynamically created as non-throwing or potentially throwing based on some parameterized value
+- Functions that are *non-throwing* by default:
+    - default constructors
+    - copy constructors
+    - move constructors
+    - destructors
+    - copy assignment operators
+    - move assignment operators
+- If any of the listed functions call (explicitly or implicitly) another function which is *potentially throwing*, then the listed function will be treated as *potentially throwing* as well. For example, if a class has a data member with a *potentially throwing* constructor, then the class’s constructors will be treated as *potentially throwing* as well
+- **Best practise**: If you want any of the above listed functions to be non-throwing, explicitly tag them as `noexcept` (even though they are defaulted that way), to ensure they don’t inadvertently become *potentially throwing*
+- Functions that are *potentially throwing* by default:
+    - Normal functions
+    - User-defined constructors
+    - Some operators, such as new
+- `noexcept operator` can be used inside functions. It takes an expression as an argument, and returns true or false if the compiler thinks it will throw an exception or not. The noexcept operator is checked statically at compile-time, and doesn’t actually evaluate the input expression:
+
+        void foo() {throw -1;}
+        void boo() {};
+        void goo() noexcept {};
+        struct S{};
+        
+        constexpr bool b1{ noexcept(5 + 3) }; // true; ints are non-throwing
+        constexpr bool b2{ noexcept(foo()) }; // false; foo() throws an exception
+        constexpr bool b3{ noexcept(boo()) }; // false; boo() is implicitly noexcept(false)
+        constexpr bool b4{ noexcept(goo()) }; // true; goo() is explicitly noexcept(true)
+        constexpr bool b5{ noexcept(S{}) };   // true; a struct's default constructor is noexcept by default
+- `noexcept operator` can be used to conditionally execute code depending on whether it is potentially throwing or not. This is required to fulfill certain *exception safety guarantees*
+- **Exception safety guarantee** is a contractual guideline about how functions or classes will behave in the event an exception occurs. There are four levels of exception safety:
+
+    - *No guarantee* -- There are no guarantees about what will happen if an exception is thrown (e.g. a class may be left in an unusable state)
+    - *Basic guarantee* -- If an exception is thrown, no memory will be leaked and the object is still usable, but the program may be left in a modified state.
+    - *Strong guarantee* -- If an exception is thrown, no memory will be leaked and the program state will not be changed. This means the function must either completely succeed or have no side effects if it fails. This is easy if the failure happens before anything is modified in the first place, but can also be achieved by rolling back any changes so the program is returned to the pre-failure state.
+    - *No throw / No fail* -- The function will always succeed (no-fail) or fail without throwing an exception (no-throw).
+
+More detailed about the last point:
+
+- The *no-throw guarantee*: if a function fails, then it won’t throw an exception. Instead, it will return an error code or ignore the problem. No-throw guarantees are required during stack unwinding when an exception is already being handled; for example, all destructors should have a no-throw guarantee (as should any functions those destructors call). Examples of code that should be no-throw:
+
+    - destructors and memory deallocation/cleanup functions
+    - functions that higher-level no-throw functions need to call
+
+- The *no-fail guarantee*: a function will always succeed in what it tries to do (and thus never has a need to throw an exception, thus, no-fail is a slightly stronger form of no-throw). Examples of code that should be no-fail:
+
+    - move constructors and move assignment
+    - swap functions
+    - clear/erase/reset functions on containers
+    - operations on std::unique_ptr
+    - functions that higher-level no-fail functions need to call
+
+- **Best practise**: Use the noexcept specifier in specific cases where you want to express a *no-fail* or *no-throw guarantee* (only on functions that *must not* throw or fail). If you are uncertain whether a function should have a no-fail/no-throw guarantee, error on the side of caution and do not mark it with `noexcept`
+- There are a few good reasons to mark functions a non-throwing:
+    - Non-throwing functions can be safely called from functions that are not exception-safe, such as destructors
+    - Functions that are `noexcept` can enable the compiler to perform some optimizations that would not otherwise be available. Because a noexcept function cannot throw an exception, the compiler doesn’t have to worry about keeping the runtime stack in an unwindable state, which can allow it to produce faster code.
+    - There are also a few cases where knowing a function is `noexcept` allows us to produce more efficient implementations in our own code: the standard library containers (such as `std::vector`) are noexcept aware and will use the `noexcept operator` to determine whether to use *move semantics* (faster) or *copy semantics* (slower) in some places
+- Before C++11, **dynamic exception specifications** were used in place of noexcept. The *dynamic exception specifications* syntax uses the `throw` keyword to list which exception types a function might directly or indirectly throw:
+
+        int doSomething() throw(); // does not throw exceptions
+        int doSomething() throw(std::out_of_range, int*); // may throw either std::out_of_range or a pointer to an integer
+        int doSomething() throw(...); // may throw anything
+
+Were removed in C++17.
