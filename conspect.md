@@ -2634,3 +2634,23 @@ More detailed about the last point:
         int doSomething() throw(...); // may throw anything
 
 Were removed in C++17.
+
+# Move semantics and smart pointers
+- **Smart pointer** is a composition class that is designed to manage dynamically allocated memory and ensure that memory gets deleted when the smart pointer object goes out of scope:
+
+`Auto_ptr1<Resource> ptr(new Resource()); // ptr now owns the Resource`
+- The problem might occur if we do the following:
+
+        Auto_ptr1<Resource> res1(new Resource());
+	    Auto_ptr1<Resource> res2(res1); // Alternatively, don't initialize res2 and then assign res2 = res1;
+
+(also, on pass and return by value)
+
+C++ automatically provides shallow copy constructor and `operator=` to `Auto_ptr1`, so `Resource` pointer will be duplicated. Deep copy also doesn't work, because it might be expensive (or undesirable/impossible). So, instead of copying, we move the ownership of the pointer from source to destination object
+- **Move semantics** means the class will transfer ownership of the object rather than making a copy. See implementation of `Auto_ptr2`: `conspect/src/smart-pointers/Auto_ptr2.cpp`
+- Why to avoid `std::auto_ptr`:
+    1. Because `std::auto_ptr` implements move semantics through the copy constructor and assignment operator, passing a `std::auto_ptr` by value to a function will cause your resource to get moved to the function parameter (and be destroyed at the end of the function)
+    2. `std::auto_ptr` always deletes its contents using non-array `delete`. This means auto_ptr won’t work correctly with dynamically allocated arrays. Worse, it won’t prevent you from passing it a dynamic array, which it will then mismanage, leading to memory leaks
+    3. `auto_ptr` doesn’t play nice with a lot of the other classes in the standard library, including most of the containers and algorithms. This occurs because those standard library classes assume that when they copy an item, it actually makes a copy, not a move
+- **Rule**: `std::auto_ptr` is deprecated and should not be used.
+- In C++11, move semantics were officially added, to properly differentiate copying from moving, and `std::auto_ptr` was replaced with "move-aware" smart ptrs: `std::unique_ptr`, `std::weak_ptr`, and `std::shared_ptr`
