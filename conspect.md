@@ -9,6 +9,7 @@
 - Retroactively - задним числом
 - Ubiquitous - вездесущий
 - Waive - отказаться
+- Compelling - убедительный, веский
 
 # Data
 - Data is any information, that can be processed, stored and moved by computer.
@@ -2721,3 +2722,68 @@ With that, `Auto_ptr4` becomes a good smart pointer class. It is now similar to 
 Example: see `conspect/src/move-semantics/std-move-if-noexcept.cpp`
 - `std::move_if_noexcept` will return a movable r-value if the object has a `noexcept` move constructor, otherwise it will return a copyable l-value. We can use the `noexcept` specifier in conjunction with `std::move_if_noexcept` to use move semantics only when a strong exception guarantee exists (and use copy semantics otherwise) (move constructors are `noexcept` by default, unless they call a function that is `noexcept(false)`)
 - **Warning**: If a type has both potentially throwing move semantics and deleted copy semantics (the copy constructor and copy assignment operator are unavailable), then `std::move_if_noexcept` will waive the strong guarantee and invoke move semantics. This conditional waiving of the strong guarantee is ubiquitous in the standard library container classes, since they use `std::move_if_noexcept` often
+
+## std::unique_ptr
+- Smart pointers should always be allocated on the stack - so they are always automatically destroyed, and thus will always clean up the dynamic resources they manage
+- `std::unique_ptr` should be used to manage any dynamically allocated object that is not shared by multiple objects. Lives in `<memory>` header
+- Implements move semantics, so copy is disabled:
+
+        std::unique_ptr<Resource> res1{ new Resource{} }; // Resource created here
+        std::unique_ptr<Resource> res2{}; // Start as nullptr
+    
+        // res2 = res1; // Won't compile: copy assignment is disabled
+        res2 = std::move(res1); // res2 assumes ownership, res1 is set to null
+
+- `std::unique_ptr` has overloaded `operator*`, which returns a reference to the managed resource, and `operator->`, which returns a pointer. Because `std::unique_ptr` may not always manage a resource, before we use any of these operators, we should check whether unique_ptr actually has a resource. This is easy: unique_ptr has a cast to bool that returns true if unique_ptr is managing a resource:
+
+        std::unique_ptr<Resource> res{ new Resource{} };
+ 
+	    if (res) { std::cout << *res << '\n'; }
+
+- Unlike auto_ptr, unique_ptr knows when to use scalar or array `delete`. Still, **Rule**: Favor `std::array`, `std::vector`, or `std::string` over a smart pointer managing a fixed array, dynamic array, or C-style string
+- **Rule**: use `std::make_unique()` instead of creating `std::unique_ptr` and using `new` yourself:
+
+        auto f1{ std::make_unique<Fraction>(3, 5) };
+    
+        // Create a dynamically allocated array of Fractions of length 4
+        auto f2{ std::make_unique<Fraction[]>(4) };
+
+It makes the code simpler, also it resolves an exception safety issue that can result from C++ leaving the order of evaluation for function arguments unspecified. Example:
+
+        some_function(std::unique_ptr<T>(new T), function_that_can_throw_exception());
+
+The above may be called in such order: `new T` => `function_that_can_throw_exception()` => create`std::unique_ptr<T>`. So `T` will be leaked, if `function_that_can_...` throws an exception
+- In general, we should not return std::unique_ptr by pointer (ever) or reference (unless we have a specific compelling reason to).
+- If we want to pass unique_ptr to a function, that will take ownership of the contents, pass by value (using `move` because copy is disabled):
+
+        void takeOwnership(std::unique_ptr<Resource> res) {...}
+
+        int main()
+        {
+            auto ptr{ std::make_unique<Resource>() };
+    
+            takeOwnership(std::move(ptr));
+
+            return 0;
+        }
+- We can pass a unique_ptr by reference (which will allow the function to use the object without assuming ownership), we should only do so when the called function might alter or change the object being managed
+- It’s better to just pass the resource itself (by pointer or reference, depending on whether null is a valid argument). This allows the function to remain agnostic of how the caller is managing its resources. To get raw resource ptr, use `get()` member function:
+
+        auto ptr{ std::make_unique<Resource>() };
+	    useResource(ptr.get());
+
+- We can use `std::unique_ptr` as a composition member of your class, so that our class destructor doesn't have to worry about deleting dynamic memory. **Note**: if class object itself is dynamically allocated, it's at risk of not being properly deallocated itself
+- Ways to misuse `std::unique_ptr`:
+    - Don’t let multiple classes manage the same resource, because they both will try to delete it, which will lead to undefined behaviour:
+
+            Resource *res{ new Resource() };
+            std::unique_ptr<Resource> res1{ res };
+            std::unique_ptr<Resource> res2{ res };
+    
+    - Don't manually delete the resource out from underneath the unique_ptr:
+
+            Resource *res{ new Resource() };
+            std::unique_ptr<Resource> res1{ res };
+            delete res;
+
+**Note**: `std::make_unique()` prevents both of the above cases from happening inadvertently
