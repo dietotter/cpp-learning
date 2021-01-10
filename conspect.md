@@ -2654,3 +2654,43 @@ C++ automatically provides shallow copy constructor and `operator=` to `Auto_ptr
     3. `auto_ptr` doesn’t play nice with a lot of the other classes in the standard library, including most of the containers and algorithms. This occurs because those standard library classes assume that when they copy an item, it actually makes a copy, not a move
 - **Rule**: `std::auto_ptr` is deprecated and should not be used.
 - In C++11, move semantics were officially added, to properly differentiate copying from moving, and `std::auto_ptr` was replaced with "move-aware" smart ptrs: `std::unique_ptr`, `std::weak_ptr`, and `std::shared_ptr`
+
+## r-value references
+- In addition to l-values and r-values, in order to support move semantics, C++11 introduces 3 new value categories: **pr-values**, **x-values**, and **gl-values** ([see for more](https://en.cppreference.com/w/cpp/language/value_category))
+- C++11 adds a new type of reference called an **r-value reference**. An r-value reference is a reference that is designed to be initialized with an r-value (only): `int &&rref{ 5 };`
+- R-value ref properties:
+    1. r-value refs extend the lifespan of the object they are initialized with to the lifespan of the r-value reference (l-value refs to const objects can do this too)
+    2. Non-const r-value refs allow you to modify the r-value
+- R-value refs can be useful for function overloads as function parameters, to have different behaviour for l-value and r-value arguments:
+
+        void fun(const int &lref) // l-value arguments will select this function
+        {
+            std::cout << "l-value reference to const\n";
+        }
+        
+        void fun(int &&rref) // r-value arguments will select this function
+        {
+            std::cout << "r-value reference\n";
+        }
+    
+**Note**: r-value reference itself is a l-value, as all named objects are. So `int &&ref{ 5 }; fun(ref);` will call the l-value version of `fun()`
+- We can think this way: named objects are *l-values*, anonymous objects are *r-values*
+- We should almost never return r-value refs, for the same reason as we almost never return l-value refs
+
+## Move constructors and move assignment
+- The goal of the move constructor and move assignment is to move ownership of the resources from one object to another (which is typically much less expensive than making a copy)
+- We define move constructor and move assignment analogously to their copy counterparts, but when copy flavors of these functions take in const l-value reference parameter, the move flavors use non-const r-value reference parameters. Example: see `conspect/src/smart-pointers/move-constructor-assignment.cpp`
+- **Rule**: If you want a move constructor and move assignment that do moves, you’ll need to write them yourself
+- Key insight behind move semantics:
+    - If we construct an object or do an assignment where the argument is an l-value, the only thing we can reasonably do is copy the l-value. We can’t assume it’s safe to alter the l-value, because it may be used again later in the program. If we have an expression “a = b”, we wouldn’t reasonably expect b to be changed in any way.
+    - If we construct an object or do an assignment where the argument is an r-value, then we know that r-value is just a temporary object of some kind. Instead of copying it (which can be expensive), we can simply transfer its resources (which is cheap) to the object we’re constructing or assigning. This is safe to do because the temporary will be destroyed at the end of the expression anyway.
+- Move functions should always leave both objects in a well-defined state: see EXPLANATION TO LINE 31 in `conspect/src/smart-pointers/move-constructor-assignment.cpp`
+- Automatic l-values (created on the stack, not dynamically) returned by value may be moved instead of copied: see EXPLANATION TO generateResource() in `conspect/src/smart-pointers/move-constructor-assignment.cpp`
+- In move-enabled classes, it's sometimes desirable to delete the copy constructor and copy assignment functions to ensure copies aren't made. In `Auto_ptr4` class of `conspect/src/smart-pointers/move-constructor-assignment.cpp`, we don't want to copy templated object `T`, because it's expensive, and whatever class T is, it may not even support copying. So we can disable support of copy semantics:
+
+        Auto_ptr4(const Auto_ptr5& a) = delete;
+        Auto_ptr4& operator=(const Auto_ptr5& a) = delete;
+
+If we try to pass an `Auto_ptr4` l-value by value, the compiler will complain that the copy constructor has been deleted. This is good, because we should probably be passing `Auto_ptr4` by const l-value reference anyway.
+
+With that, `Auto_ptr4` becomes a good smart pointer class. It is now similar to `std::unique_ptr`
