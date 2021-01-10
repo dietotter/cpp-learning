@@ -7,6 +7,8 @@
 - Incur - нести за собой
 - Inadvertently - нечаянно
 - Retroactively - задним числом
+- Ubiquitous - вездесущий
+- Waive - отказаться
 
 # Data
 - Data is any information, that can be processed, stored and moved by computer.
@@ -2712,3 +2714,10 @@ With that, `Auto_ptr4` becomes a good smart pointer class. It is now similar to 
     - Many sorting algorithms (such as selection sort and bubble sort) work by swapping pairs of elements. Move semantics is more efficient in this case, than copying
     - Moving the contents managed by one smart pointer to another
 - **Conclusion**: `std::move` can be used whenever we want to treat an l-value like an r-value for the purpose of invoking move semantics instead of copy semantics.
+
+## std::move_if_noexcept
+- Copy semantics hold *strong exception guarantee* (we can just discard the failed copy, the original object is not harmed), while move semantics don't (if source object is non-temporary and has already transferred the ownership, when the exception occurs, then it's left in a modified state). It is simple enough to avoid throwing exceptions in the body of a move constructor, but a move constructor may invoke other constructors that are potentially throwing.
+
+Example: see `conspect/src/move-semantics/std-move-if-noexcept.cpp`
+- `std::move_if_noexcept` will return a movable r-value if the object has a `noexcept` move constructor, otherwise it will return a copyable l-value. We can use the `noexcept` specifier in conjunction with `std::move_if_noexcept` to use move semantics only when a strong exception guarantee exists (and use copy semantics otherwise) (move constructors are `noexcept` by default, unless they call a function that is `noexcept(false)`)
+- **Warning**: If a type has both potentially throwing move semantics and deleted copy semantics (the copy constructor and copy assignment operator are unavailable), then `std::move_if_noexcept` will waive the strong guarantee and invoke move semantics. This conditional waiving of the strong guarantee is ubiquitous in the standard library container classes, since they use `std::move_if_noexcept` often
