@@ -2647,7 +2647,7 @@ Were removed in C++17.
 (also, on pass and return by value)
 
 C++ automatically provides shallow copy constructor and `operator=` to `Auto_ptr1`, so `Resource` pointer will be duplicated. Deep copy also doesn't work, because it might be expensive (or undesirable/impossible). So, instead of copying, we move the ownership of the pointer from source to destination object
-- **Move semantics** means the class will transfer ownership of the object rather than making a copy. See implementation of `Auto_ptr2`: `conspect/src/smart-pointers/Auto_ptr2.cpp`
+- **Move semantics** means the class will transfer ownership of the object rather than making a copy. See implementation of `Auto_ptr2`: `conspect/src/move-semantics/Auto_ptr2.cpp`
 - Why to avoid `std::auto_ptr`:
     1. Because `std::auto_ptr` implements move semantics through the copy constructor and assignment operator, passing a `std::auto_ptr` by value to a function will cause your resource to get moved to the function parameter (and be destroyed at the end of the function)
     2. `std::auto_ptr` always deletes its contents using non-array `delete`. This means auto_ptr won’t work correctly with dynamically allocated arrays. Worse, it won’t prevent you from passing it a dynamic array, which it will then mismanage, leading to memory leaks
@@ -2679,14 +2679,14 @@ C++ automatically provides shallow copy constructor and `operator=` to `Auto_ptr
 
 ## Move constructors and move assignment
 - The goal of the move constructor and move assignment is to move ownership of the resources from one object to another (which is typically much less expensive than making a copy)
-- We define move constructor and move assignment analogously to their copy counterparts, but when copy flavors of these functions take in const l-value reference parameter, the move flavors use non-const r-value reference parameters. Example: see `conspect/src/smart-pointers/move-constructor-assignment.cpp`
+- We define move constructor and move assignment analogously to their copy counterparts, but when copy flavors of these functions take in const l-value reference parameter, the move flavors use non-const r-value reference parameters. Example: see `conspect/src/move-semantics/move-constructor-assignment.cpp`
 - **Rule**: If you want a move constructor and move assignment that do moves, you’ll need to write them yourself
 - Key insight behind move semantics:
     - If we construct an object or do an assignment where the argument is an l-value, the only thing we can reasonably do is copy the l-value. We can’t assume it’s safe to alter the l-value, because it may be used again later in the program. If we have an expression “a = b”, we wouldn’t reasonably expect b to be changed in any way.
     - If we construct an object or do an assignment where the argument is an r-value, then we know that r-value is just a temporary object of some kind. Instead of copying it (which can be expensive), we can simply transfer its resources (which is cheap) to the object we’re constructing or assigning. This is safe to do because the temporary will be destroyed at the end of the expression anyway.
-- Move functions should always leave both objects in a well-defined state: see EXPLANATION TO LINE 31 in `conspect/src/smart-pointers/move-constructor-assignment.cpp`
-- Automatic l-values (created on the stack, not dynamically) returned by value may be moved instead of copied: see EXPLANATION TO generateResource() in `conspect/src/smart-pointers/move-constructor-assignment.cpp`
-- In move-enabled classes, it's sometimes desirable to delete the copy constructor and copy assignment functions to ensure copies aren't made. In `Auto_ptr4` class of `conspect/src/smart-pointers/move-constructor-assignment.cpp`, we don't want to copy templated object `T`, because it's expensive, and whatever class T is, it may not even support copying. So we can disable support of copy semantics:
+- Move functions should always leave both objects in a well-defined state: see EXPLANATION TO LINE 31 in `conspect/src/move-semantics/move-constructor-assignment.cpp`
+- Automatic l-values (created on the stack, not dynamically) returned by value may be moved instead of copied: see EXPLANATION TO generateResource() in `conspect/src/move-semantics/move-constructor-assignment.cpp`
+- In move-enabled classes, it's sometimes desirable to delete the copy constructor and copy assignment functions to ensure copies aren't made. In `Auto_ptr4` class of `conspect/src/move-semantics/move-constructor-assignment.cpp`, we don't want to copy templated object `T`, because it's expensive, and whatever class T is, it may not even support copying. So we can disable support of copy semantics:
 
         Auto_ptr4(const Auto_ptr5& a) = delete;
         Auto_ptr4& operator=(const Auto_ptr5& a) = delete;
@@ -2694,3 +2694,21 @@ C++ automatically provides shallow copy constructor and `operator=` to `Auto_ptr
 If we try to pass an `Auto_ptr4` l-value by value, the compiler will complain that the copy constructor has been deleted. This is good, because we should probably be passing `Auto_ptr4` by const l-value reference anyway.
 
 With that, `Auto_ptr4` becomes a good smart pointer class. It is now similar to `std::unique_ptr`
+
+## std::move
+- There are cases, where we want to invoke move semantics, but the objects we work with are l-values (e.g., swap function, where we want to make our code more performant by doing 3 moves instead of 3 copies). `std::move` from `#include <utility>` converts its arguments to r-values. Example of swap function with move semantics:
+
+        template<class T>
+        void myswap(T& a, T& b) 
+        { 
+            T tmp { std::move(a) }; // invokes move constructor
+            a = std::move(b); // invokes move assignment
+            b = std::move(tmp); // invokes move assignment
+        }
+
+- `std::move()` gives a hint to the compiler that the programmer doesn’t need this object any more (at least, not in its current state). Consequently, you should not use `std::move()` on any persistent object you don’t want to modify, and you should not expect the state of any objects that have had `std::move()` applied to be the same after they are moved
+- It’s a good idea to always leave the objects being stolen from in some well-defined (deterministic) state. Ideally, this should be a “null state”, where the object is set back to its uninitiatized or zero state. Why: with `std::move`, the object being stolen from may not be a temporary after all. The user may want to reuse this (now empty) object again, or test it in some way. Example: see `conspect/src/move-semantics/std-move-example.cpp`
+- Some usages of `std::move`:
+    - Many sorting algorithms (such as selection sort and bubble sort) work by swapping pairs of elements. Move semantics is more efficient in this case, than copying
+    - Moving the contents managed by one smart pointer to another
+- **Conclusion**: `std::move` can be used whenever we want to treat an l-value like an r-value for the purpose of invoking move semantics instead of copy semantics.
