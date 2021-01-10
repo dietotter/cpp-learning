@@ -2787,3 +2787,11 @@ The above may be called in such order: `new T` => `function_that_can_throw_excep
             delete res;
 
 **Note**: `std::make_unique()` prevents both of the above cases from happening inadvertently
+
+## std::shared_ptr
+- `std::shared_ptr` is meant to solve the case where you need multiple smart pointers co-owning a resource. Internally, std::shared_ptr keeps track of how many std::shared_ptr are sharing the resource. As long as at least one std::shared_ptr is pointing to the resource, the resource will not be deallocated, even if individual std::shared_ptr are destroyed. As soon as the last std::shared_ptr managing the resource goes out of scope (or is reassigned to point at something else), the resource will be deallocated. Lives in `<memory>` header
+- For explicit example (of this and `std::make_shared`): see `conspect/src/move-semantics/shared-and-make-shared.cpp`
+- **Rule**: Always make a copy of an existing `std::shared_ptr` if you need more than one `std::shared_ptr` pointing to the same resource.
+- The reasons for using `std::make_shared()` are the same as `std::make_unique()` - `std::make_shared()` is simpler and safer (there’s no way to directly create two shared_ptr pointing to the same resource using this method). However, make_shared is also more performant than not using it, because of the way that `std::shared_ptr` keeps track of how many pointers are pointing at a given resource
+- Details of how `std::shared_ptr` works: see `conspect/text/move-semantics/shared-ptr-details.md`
+- `std::unique_ptr` can be converted into a `std::shared_ptr` via a special `std::shared_ptr` constructor that accepts a `std::unique_ptr` r-value. However, shared_ptr can not be safely converted to a unique_ptr
