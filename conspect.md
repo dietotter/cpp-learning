@@ -10,6 +10,7 @@
 - Ubiquitous - вездесущий
 - Waive - отказаться
 - Compelling - убедительный, веский
+- Perils - опасности
 
 # Data
 - Data is any information, that can be processed, stored and moved by computer.
@@ -2795,3 +2796,12 @@ The above may be called in such order: `new T` => `function_that_can_throw_excep
 - The reasons for using `std::make_shared()` are the same as `std::make_unique()` - `std::make_shared()` is simpler and safer (there’s no way to directly create two shared_ptr pointing to the same resource using this method). However, make_shared is also more performant than not using it, because of the way that `std::shared_ptr` keeps track of how many pointers are pointing at a given resource
 - Details of how `std::shared_ptr` works: see `conspect/text/move-semantics/shared-ptr-details.md`
 - `std::unique_ptr` can be converted into a `std::shared_ptr` via a special `std::shared_ptr` constructor that accepts a `std::unique_ptr` r-value. However, shared_ptr can not be safely converted to a unique_ptr
+- The perils of the shared_ptr are the same as of the unique_ptr's, but, unlike unique_ptr, where you have to worry about only single pointer being properly disposed of, with shared_ptr you have to worry about all of the pointers. If at least one `std::shared_ptr` isn't properly destroyed, the resource will not be deallocated
+- From C++17, `std::shared_ptr` has support of arrays, but `std::make_shared` still doesn't (may change in C++20)
+
+## std::weak_ptr and circular dependency issues with std::shared_ptr
+- A **Circular reference** (also called a *cyclical reference* or a *cycle*) is a series of references where each object references the next, and the last object references back to the first, causing a referential loop. The references do not need to be actual C++ references -- they can be pointers (like in case of shared_ptr), unique IDs, or any other means of identifying specific objects
+- The example of `std::shared_ptr` circular dependency and the issue with it (memory not being deallocated) + how to fix it with `std::weak_ptr`: see `conspect/src/move-semantics/circular-dependency-and-weak-ptr.cpp`
+- Reductive case - when circular reference happens with a single shared_ptr. See example and how to fix it with `std::weak_ptr` in `tests/move-semantics/reductive-case-weak-ptr.cpp`
+- `std::weak_ptr` was designed to solve the circular dependency issue. Weak_ptr is an observer - it can observe and access the same object as shared_ptr, but is not considered an owner, so when shared_ptr goes out of scope, weak_ptr doesn't count
+- `std::weak_ptr` is not directly usable - it has no `operator->`. To use it, we must first convert it to shared_ptr, by using `lock()` member function
