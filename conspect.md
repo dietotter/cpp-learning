@@ -11,6 +11,7 @@
 - Waive - отказаться
 - Compelling - убедительный, веский
 - Perils - опасности
+- Slated - намечен
 
 # Data
 - Data is any information, that can be processed, stored and moved by computer.
