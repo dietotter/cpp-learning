@@ -783,7 +783,7 @@ Fortunately, that's just an alias for *std::size_t*, so we can use that instead:
 - Simplest kind of iterator - pointer iterator (using pointer arithmetics): see `conspect/src/iterators/pointer-iterator.cpp`
 - All types that have `begin()` and `end()` member functions or can be used with `std::begin` and `std::end` are usable in range-based for-loops (for-each loops). Including user-defined types
 - If the elements being iterated over change address or are destroyed, the iterator becomes **invalidated** (*dangling*, like pointers and references can be)
-- Some operatuons that modify containers (such as adding elem to *std::vector*) can cause elems in the container to change addresses. When this happens, existing iterators will be invalidated. Good C++ reference documentation should note which container operations may or will invalidate iterators
+- Some operations that modify containers (such as adding elem to *std::vector*) can cause elems in the container to change addresses. When this happens, existing iterators will be invalidated. Good C++ reference documentation should note which container operations may or will invalidate iterators
 
 # Standard library algorithms
 - The functionality provided in algorithms library generally fall into one of three categories:
