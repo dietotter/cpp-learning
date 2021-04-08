@@ -775,6 +775,9 @@ Fortunately, that's just an alias for *std::size_t*, so we can use that instead:
 - Resizing vector is computationally expensive, so if I need a vector with specific num of elems but don't know the values of the elems at the point of declaration, I can create a vector with default elements like so: `std::vector<int> array(5);`. Using direct initialization, we can create a vector with 5 elems and init them to 0. If we use brace initialization here, the vector would have 1 elem, which would be the integer 5. *A rule of thumb:* if a type is some kind of list and I don't want to init it with a list, use direct initialization
 - Using `std::vector`, we can compact 8 booleans into a single byte: `std::vector<bool> array{ true, false, false, true, true };`
 - Prefer using `std::vector` over build-in dynamic arrays
+- Internally, `std::vector` stores elements dynamically. Some links for understanding:
+    - https://www.quora.com/C-programming-language-Does-std-vector-use-stack-or-heap-memory-and-why#:~:text=3%20years%20ago-,Originally%20Answered%3A%20C%2B%2B%20(programming%20language)%3A%20Does%20std%20vector%20use,or%20heap%20memory%20and%20why%3F&text=vect%20will%20be%20on%20the,will%20reside%20in%20that%20array.
+    - https://stackoverflow.com/questions/8036474/when-vectors-are-allocated-do-they-use-memory-on-the-heap-or-the-stack
 
 # Iterators
 - **Iterator** is an object designed to traverse through a container (e.g. values in array, chars in a string), providing access to each element along the way

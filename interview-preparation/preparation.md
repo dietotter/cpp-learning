@@ -1,0 +1,2 @@
+- [Why there is no virtual constructor](https://stackoverflow.com/questions/733360/why-do-we-not-have-a-virtual-constructor-in-c)
+- 

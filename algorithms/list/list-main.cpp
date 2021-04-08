@@ -3,6 +3,7 @@
 #include <iostream>
 #include <exception>
 #include <cstddef>
+#include <algorithm>
 
 void noIteratorCheck()
 {
@@ -81,9 +82,9 @@ private:
     int m_x{ 0 };
 
 public:
-    Resource() { std::cout << "Resource allocated\n"; }
-    Resource(int x): m_x{ x } { std::cout << "Resource allocated\n"; }
-    ~Resource() { std::cout << "Resource deallocated\n"; }
+    Resource() { std::cout << "Resource 0 allocated\n"; }
+    Resource(int x): m_x{ x } { std::cout << "Resource " << m_x << " allocated\n"; }
+    ~Resource() { std::cout << "Resource " << m_x << " deallocated\n"; }
 
     friend bool operator==(const Resource &res1, const Resource &res2)
     {
@@ -93,16 +94,16 @@ public:
 
 void dynamicMemoryCheck()
 {
-    algorithms::LinkedList<Resource> list{ { 5 }, { 1 }, Resource() };
-
-    std::cout << "Now, dynamic stuff\n";
-    
-    algorithms::LinkedList<Resource*> list2{ new Resource{ 5 }, new Resource{ 1 }, new Resource };
+    algorithms::LinkedList<Resource*> list2{ new Resource{ 5 }, new Resource, new Resource{ 1 } };
+    // std::sort(list2.begin(), list2.end());
 
     for (auto elem : list2)
     {
         delete elem;
     }
+
+    // std::cout << "Now, non-dynamic stuff\n";
+    // algorithms::LinkedList<Resource> list{ { 5 }, { 1 }, Resource() };
 }
 
 void listMain()
@@ -110,5 +111,5 @@ void listMain()
     // noIteratorCheck();
     // constListCheck();
     // iteratorCheck();
-    dynamicMemoryCheck();
+    // dynamicMemoryCheck();
 }

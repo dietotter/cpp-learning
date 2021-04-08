@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <initializer_list>
+// #include <iterator> // for std::forward_iterator_tag
 
 namespace algorithms {
 
@@ -20,10 +21,27 @@ namespace algorithms {
         Node *m_first{ nullptr };
         Node *m_last{ nullptr };
         std::size_t m_length{ 0 };
+        
+        T& accessValue(std::size_t index) const;
 
     public:
         class Iterator
         {
+        public:
+            /*
+            // produces errors currently.
+            // Basically, user-defined iterators should have std::iterator traits specialized (https://quares.ru/?id=115202)
+            // I did that, but then a lot of errors started appearing
+            // (to see what errors, uncomment this section and try to use std::sort on my LinkedList, like in list-main.cpp)
+
+            using difference_type = std::ptrdiff_t;
+            using value_type = T;
+            using pointer = T*;
+            using reference = T&;
+            using iterator_category = std::forward_iterator_tag;
+            // using self_type = Iterator;
+            // using self_reference = Iterator&;
+            */
         private:
             const Node *m_node{ nullptr };
 

@@ -129,24 +129,17 @@ namespace algorithms {
     template <class T>
     T& LinkedList<T>::operator[](std::size_t index)
     {
-        auto node{ m_first };
-        std::size_t i{ 0 };
-        while (i < index && node)
-        {
-            node = node->next;
-            ++i;
-        }
-
-        if (!node)
-        {
-            throw std::out_of_range("Out of LinkedList bounds. Index: " + std::to_string(index));
-        }
-
-        return node->value;
+        return accessValue(index);
     }
 
     template <class T>
     const T& LinkedList<T>::operator[](std::size_t index) const
+    {
+        return accessValue(index);
+    }
+
+    template <class T>
+    T& LinkedList<T>::accessValue(std::size_t index) const
     {
         auto node{ m_first };
         std::size_t i{ 0 };
