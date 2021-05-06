@@ -7,3 +7,6 @@ main
 
 # Debug symbols
 *.dSYM
+
+# MacOS stuff
+.DS_Store

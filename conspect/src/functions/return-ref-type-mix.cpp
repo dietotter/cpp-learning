@@ -21,7 +21,7 @@ int main()
     const int& cref{ returnByValue() }; // case C -- ok, the lifetime of the return value is extended to the lifetime of cref
 
     // Lifetime extension doesn't save dangling references
-    const int &ref { returnByReference() }; // runtime error
+    const int &ref { returnByReference2() }; // runtime error
     // 5 goes out of scope first, then the reference to 5 is copied back to the caller,
     // and then ref extends the lifetime of the now-dangling reference
     // The case above this case works as expected, because the literal value 5 is copied back into the scope of the caller

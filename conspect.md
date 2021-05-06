@@ -177,8 +177,8 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
     - right shift: `1100 >> 1 = 0110`; `1100 >> 3 = 0001` (same thing)
     - NOT: `~0000 0100 = 1111 1011`
     - OR: `0101 | 0110 = 0111`
-    - AND: `0101 | 0110 = 0100`
-    - XOR: `0101 | 0110 = 0011`. When evaluating bitwise numbers in column, if there is even number of 1 bits in one column, the result is 0, if odd - result is 1.
+    - AND: `0101 & 0110 = 0100`
+    - XOR: `0101 ^ 0110 = 0011`. When evaluating bitwise numbers in column, if there is even number of 1 bits in one column, the result is 0, if odd - result is 1.
     - and their assignment counterparts: `x <<= 1;` and so on
 - Prior to C++, don't shift signed integers (and then still it's better to use unsigned)
 - Convert binary to decimal: 0001 0101 => 0*2^7 + 0*2^6 + 0*2^5 + 1*2^4 + 0*2^3 + 1*2^2 + 0*2^1 + 1*2^0 = 1*2^4 + 1*2^2 + 1*2^0 = 16 + 4 + 1 = 21
