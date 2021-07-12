@@ -10,3 +10,6 @@ main
 
 # MacOS stuff
 .DS_Store
+
+# Interview stuff
+interview-preparation/interview-summaries/

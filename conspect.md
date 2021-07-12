@@ -260,7 +260,7 @@ Compile-time constants should be declared as constexpr: `constexpr double gravit
     2. In **dynamic initialization**, global variables with non-constexpr initializers are initialized (though the phase is more complex and nuanced)
 - Within a single file, global variables are mostly initialized in order of definition. The order of initialization across different files is not defined
 - Dynamic initialization of global variables should be avoided whenever possible
-- Non-contant global variables should be avoided almost always
+- Non-constant global variables should be avoided almost always
 - Advices for all global variables:
     1. Put them into namespaces
     2. Encapsulate the variable: make its linkage internal (if its not already), then provide external global access function - these functions can ensure proper usage (e.g. do input validation etc). `double getGravity() { ...; return constants::gravity; }`
